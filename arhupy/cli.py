@@ -4,6 +4,7 @@ import argparse
 
 from .diff import compare_prompts
 from .scorer import score_prompt
+from .web import run_server
 
 
 def main(argv=None):
@@ -17,6 +18,8 @@ def main(argv=None):
     diff_parser = subparsers.add_parser("diff", help="Compare two prompts")
     diff_parser.add_argument("prompts", nargs="*", help="Two prompt texts to compare")
 
+    subparsers.add_parser("web", help="Start the local web dashboard")
+
     args = parser.parse_args(argv)
     if args.command == "score":
         result = score_prompt(" ".join(args.prompt))
@@ -28,6 +31,9 @@ def main(argv=None):
         score_1 = score_prompt(prompt_1)["overall_score"]
         score_2 = score_prompt(prompt_2)["overall_score"]
         _print_diff(result, score_1, score_2)
+        return 0
+    if args.command == "web":
+        run_server()
         return 0
 
     parser.print_help()

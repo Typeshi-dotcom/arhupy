@@ -22,6 +22,7 @@ from arhupy import (
     score_prompt,
 )
 from arhupy.cli import main as cli_main
+from arhupy.web import render_comparison, render_page, render_score
 
 
 class TestPrompt(unittest.TestCase):
@@ -265,6 +266,30 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Prompt 1 score:", contents)
         self.assertIn("Prompt 2 score:", contents)
         self.assertIn("Better prompt:", contents)
+
+    def test_cli_web_calls_run_server(self):
+        """The web CLI command starts the local server."""
+        with mock.patch("arhupy.cli.run_server") as run_server:
+            exit_code = cli_main(["web"])
+
+        self.assertEqual(exit_code, 0)
+        run_server.assert_called_once_with()
+
+    def test_web_render_helpers_include_dashboard_output(self):
+        """Web render helpers produce dashboard, scoring, and comparison HTML."""
+        page = render_page()
+        score = render_score("You are a helpful assistant")
+        comparison = render_comparison("You are a coach", "You are a strict coach")
+
+        self.assertIn("arhupy Dashboard", page)
+        self.assertIn("Prompt 1", page)
+        self.assertIn("Prompt 2", page)
+        self.assertIn("Score Prompt", page)
+        self.assertIn("Compare Prompts", page)
+        self.assertIn("Prompt Score", score)
+        self.assertIn("Suggestions", score)
+        self.assertIn("Prompt Comparison", comparison)
+        self.assertIn("Better prompt", comparison)
 
 
 if __name__ == "__main__":

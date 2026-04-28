@@ -10,7 +10,7 @@ from .scorer import score_prompt
 from .tokens import estimate_tokens
 from .versioning import get_history, print_history, save_version
 
-__version__ = "0.6.0"
+__version__ = "0.7.0"
 
 __all__ = [
     "Prompt",

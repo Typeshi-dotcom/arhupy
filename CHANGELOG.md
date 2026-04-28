@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0] - Web Dashboard
+
+### Added
+
+- Local web interface for scoring and comparing prompts
+
 ## [0.6.0] - Prompt Comparison
 
 ### Added

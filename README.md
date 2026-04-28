@@ -110,6 +110,12 @@ arhupy score "You are a fitness coach"
 arhupy diff "You are a fitness coach" "You are a helpful assistant"
 ```
 
+## Web Dashboard
+
+```bash
+arhupy web
+```
+
 ## Claude Integration
 
 ```python

@@ -213,6 +213,16 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Structure:", contents)
         self.assertIn("Suggestions:", contents)
 
+    def test_cli_score_handles_empty_prompt(self):
+        """The score CLI command handles an empty prompt without crashing."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["score"])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Score:", contents)
+        self.assertIn("Suggestions:", contents)
+
 
 if __name__ == "__main__":
     unittest.main()

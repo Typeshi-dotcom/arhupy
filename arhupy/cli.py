@@ -11,7 +11,7 @@ def main(argv=None):
     subparsers = parser.add_subparsers(dest="command")
 
     score_parser = subparsers.add_parser("score", help="Score a prompt")
-    score_parser.add_argument("prompt", nargs="+", help="Prompt text to score")
+    score_parser.add_argument("prompt", nargs="*", help="Prompt text to score")
 
     args = parser.parse_args(argv)
     if args.command == "score":

@@ -15,8 +15,7 @@ def main(argv=None):
     score_parser.add_argument("prompt", nargs="*", help="Prompt text to score")
 
     diff_parser = subparsers.add_parser("diff", help="Compare two prompts")
-    diff_parser.add_argument("prompt1", help="First prompt text")
-    diff_parser.add_argument("prompt2", help="Second prompt text")
+    diff_parser.add_argument("prompts", nargs="*", help="Two prompt texts to compare")
 
     args = parser.parse_args(argv)
     if args.command == "score":
@@ -24,9 +23,10 @@ def main(argv=None):
         _print_score(result)
         return 0
     if args.command == "diff":
-        result = compare_prompts(args.prompt1, args.prompt2)
-        score_1 = score_prompt(args.prompt1)["overall_score"]
-        score_2 = score_prompt(args.prompt2)["overall_score"]
+        prompt_1, prompt_2 = _get_diff_prompts(args.prompts)
+        result = compare_prompts(prompt_1, prompt_2)
+        score_1 = score_prompt(prompt_1)["overall_score"]
+        score_2 = score_prompt(prompt_2)["overall_score"]
         _print_diff(result, score_1, score_2)
         return 0
 
@@ -65,6 +65,13 @@ def _print_diff(result, score_1, score_2):
 def _format_words(words):
     """Format a list of words for CLI output."""
     return ", ".join(words) if words else "None"
+
+
+def _get_diff_prompts(prompts):
+    """Return two prompt strings, using empty strings for omitted values."""
+    prompt_1 = prompts[0] if len(prompts) >= 1 else ""
+    prompt_2 = prompts[1] if len(prompts) >= 2 else ""
+    return prompt_1, prompt_2
 
 
 if __name__ == "__main__":

@@ -254,6 +254,18 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Prompt 2 score:", contents)
         self.assertIn("Better prompt:", contents)
 
+    def test_cli_diff_handles_empty_prompts(self):
+        """The diff CLI command handles omitted prompts without crashing."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["diff"])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Length difference:", contents)
+        self.assertIn("Prompt 1 score:", contents)
+        self.assertIn("Prompt 2 score:", contents)
+        self.assertIn("Better prompt:", contents)
+
 
 if __name__ == "__main__":
     unittest.main()

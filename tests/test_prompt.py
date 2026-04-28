@@ -157,15 +157,23 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Improve this prompt", request_text)
         self.assertIn("You are a coach", request_text)
 
-    def test_improve_prompt_requires_real_api_key(self):
-        """improve_prompt raises a clear error for missing or placeholder keys."""
+    def test_improve_prompt_requires_api_key_and_prompt_text(self):
+        """improve_prompt raises clear errors for missing required inputs."""
         with self.assertRaises(Exception) as missing_context:
             improve_prompt("You are a coach", "")
-        with self.assertRaises(Exception) as placeholder_context:
-            improve_prompt("You are a coach", "YOUR_KEY")
+        with self.assertRaises(Exception) as empty_prompt_context:
+            improve_prompt("", "test-key")
 
         self.assertIn("API key is required", str(missing_context.exception))
-        self.assertIn("real Claude API key", str(placeholder_context.exception))
+        self.assertIn("Prompt text is required", str(empty_prompt_context.exception))
+
+    def test_improve_prompt_supports_placeholder_demo_key(self):
+        """improve_prompt returns a local demo improvement for placeholder keys."""
+        result = improve_prompt("You are a coach", "YOUR_KEY")
+
+        self.assertIn("You are a coach", result)
+        self.assertIn("clear", result.lower())
+        self.assertIn("structured", result.lower())
 
     def test_prompt_to_dict_and_from_dict(self):
         """Prompt objects can round-trip through dictionary data."""

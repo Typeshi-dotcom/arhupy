@@ -3,7 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/arhupy.svg)](https://pypi.org/project/arhupy/)
 [![Python versions](https://img.shields.io/pypi/pyversions/arhupy.svg)](https://pypi.org/project/arhupy/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/Arhu/arhupy.svg?style=social)](https://github.com/Arhu/arhupy)
+[![GitHub stars](https://img.shields.io/github/stars/Typeshi-dotcom/arhupy.svg?style=social)](https://github.com/Typeshi-dotcom/arhupy)
 
 A lightweight prompt engineering toolkit for LLMs
 

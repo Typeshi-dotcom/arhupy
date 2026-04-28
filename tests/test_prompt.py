@@ -128,6 +128,22 @@ class TestPrompt(unittest.TestCase):
             self.assertEqual(restored.values, {"language": "English", "text": "Hola"})
             self.assertEqual(str(restored), "Translate to English: Hola")
 
+    def test_export_prompt_writes_pretty_json(self):
+        """export_prompt writes readable JSON with two-space indentation."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            filepath = os.path.join(temp_dir, "prompt.json")
+            prompt = Prompt("Hello, {name}.")
+            prompt.fill(name="Arhu")
+
+            export_prompt(prompt, filepath)
+
+            with open(filepath, "r", encoding="utf-8") as file:
+                contents = file.read()
+
+        self.assertTrue(contents.startswith("{\n"))
+        self.assertIn('\n  "filled_values": {', contents)
+        self.assertTrue(contents.endswith("\n"))
+
     def test_export_chain_and_import_chain(self):
         """PromptChain objects can round-trip through a JSON file."""
         with tempfile.TemporaryDirectory() as temp_dir:

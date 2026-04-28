@@ -3,7 +3,7 @@
 import os
 import tempfile
 import unittest
-from io import BytesIO
+from io import BytesIO, StringIO
 from urllib import error
 from unittest import mock
 
@@ -18,7 +18,9 @@ from arhupy import (
     import_prompt,
     load,
     save,
+    score_prompt,
 )
+from arhupy.cli import main as cli_main
 
 
 class TestPrompt(unittest.TestCase):
@@ -181,6 +183,35 @@ class TestPrompt(unittest.TestCase):
                 import_chain(filepath)
 
         self.assertIn("Could not read prompt chain file", str(context.exception))
+
+    def test_score_prompt_returns_scores_and_feedback(self):
+        """score_prompt returns numeric scores and feedback suggestions."""
+        result = score_prompt("You are a {role}. Answer this: {question}")
+
+        self.assertEqual(set(result), {
+            "length_score",
+            "clarity_score",
+            "structure_score",
+            "overall_score",
+            "feedback",
+        })
+        self.assertIsInstance(result["overall_score"], int)
+        self.assertGreaterEqual(result["overall_score"], 0)
+        self.assertLessEqual(result["overall_score"], 10)
+        self.assertIsInstance(result["feedback"], list)
+
+    def test_cli_score_prints_clean_output(self):
+        """The score CLI command prints readable scoring output."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["score", "You are a fitness coach"])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Score:", contents)
+        self.assertIn("Length:", contents)
+        self.assertIn("Clarity:", contents)
+        self.assertIn("Structure:", contents)
+        self.assertIn("Suggestions:", contents)
 
 
 if __name__ == "__main__":

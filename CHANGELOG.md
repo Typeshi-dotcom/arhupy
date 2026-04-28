@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.0] - Prompt Scoring
+
+### Added
+
+- Prompt scoring and feedback system
+
 ## [0.3.0] - Export and Import
 
 ### Added

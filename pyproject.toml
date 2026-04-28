@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arhupy"
-version = "0.3.0"
+version = "0.5.0"
 description = "A prompt engineering toolkit for LLMs"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -28,3 +28,6 @@ classifiers = [
 
 [tool.setuptools.packages.find]
 include = ["arhupy*"]
+
+[project.scripts]
+arhupy = "arhupy.cli:main"

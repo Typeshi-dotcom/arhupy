@@ -41,6 +41,7 @@ print(prompt.fill(role="teacher", language="English"))
 - Save and load prompt templates from a local JSON library
 - Export and import prompts or prompt chains as shareable JSON files
 - Estimate token counts with a simple standard-library helper
+- Score prompts and get simple feedback from local heuristics
 - Track prompt template versions with notes
 - No external dependencies
 
@@ -95,6 +96,12 @@ from arhupy import estimate_tokens
 
 tokens = estimate_tokens("A short prompt for an LLM.")
 print(tokens)
+```
+
+## Prompt Scoring
+
+```bash
+arhupy score "You are a fitness coach"
 ```
 
 ## Claude Integration

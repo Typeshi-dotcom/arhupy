@@ -108,7 +108,7 @@ response = client.ask_with_template(prompt, role="fitness coach", question="What
 print(response)
 ```
 
-## Export And Import
+## Export and Import
 
 Save a prompt to JSON:
 

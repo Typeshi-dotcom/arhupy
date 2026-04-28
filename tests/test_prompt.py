@@ -144,6 +144,28 @@ class TestPrompt(unittest.TestCase):
             self.assertIsInstance(restored, PromptChain)
             self.assertEqual(restored.build(), "System: Stay practical.\nUser: Create a checklist.")
 
+    def test_import_prompt_raises_clear_exception_for_invalid_json(self):
+        """import_prompt raises a clear exception for invalid JSON files."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            filepath = os.path.join(temp_dir, "invalid_prompt.json")
+            with open(filepath, "w", encoding="utf-8") as file:
+                file.write("{invalid json")
+
+            with self.assertRaises(Exception) as context:
+                import_prompt(filepath)
+
+        self.assertIn("not valid JSON", str(context.exception))
+
+    def test_import_chain_raises_clear_exception_for_missing_file(self):
+        """import_chain raises a clear exception when the file is missing."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            filepath = os.path.join(temp_dir, "missing_chain.json")
+
+            with self.assertRaises(Exception) as context:
+                import_chain(filepath)
+
+        self.assertIn("Could not read prompt chain file", str(context.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

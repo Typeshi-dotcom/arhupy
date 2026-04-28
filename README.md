@@ -39,6 +39,7 @@ print(prompt.fill(role="teacher", language="English"))
 - Fill prompt templates with named placeholders
 - Chain multiple prompts into one final prompt
 - Save and load prompt templates from a local JSON library
+- Export and import prompts or prompt chains as shareable JSON files
 - Estimate token counts with a simple standard-library helper
 - Track prompt template versions with notes
 - No external dependencies

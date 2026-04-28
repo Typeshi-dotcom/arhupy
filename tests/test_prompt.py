@@ -3,8 +3,11 @@
 import os
 import tempfile
 import unittest
+from io import BytesIO
+from urllib import error
+from unittest import mock
 
-from arhupy import Prompt, PromptChain, estimate_tokens, load, save
+from arhupy import ClaudeClient, Prompt, PromptChain, estimate_tokens, load, save
 
 
 class TestPrompt(unittest.TestCase):
@@ -52,6 +55,24 @@ class TestPrompt(unittest.TestCase):
                 self.assertEqual(loaded.fill(name="Arhu"), "Hello, Arhu.")
             finally:
                 os.chdir(original_cwd)
+
+    def test_claude_client_raises_exception_for_invalid_api_key(self):
+        """ClaudeClient raises a clear exception when the API call fails."""
+        body = b'{"error": {"message": "invalid api key"}}'
+        http_error = error.HTTPError(
+            url="https://api.anthropic.com/v1/messages",
+            code=401,
+            msg="Unauthorized",
+            hdrs=None,
+            fp=BytesIO(body),
+        )
+        client = ClaudeClient(api_key="invalid-api-key")
+
+        with mock.patch("arhupy.claude.request.urlopen", side_effect=http_error):
+            with self.assertRaises(Exception) as context:
+                client.ask("Hello, Claude")
+
+        self.assertIn("invalid api key", str(context.exception))
 
 
 if __name__ == "__main__":

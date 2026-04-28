@@ -20,7 +20,7 @@ pip install arhupy
 Install from source:
 
 ```bash
-git clone https://github.com/Arhu/arhupy.git
+git clone https://github.com/Typeshi-dotcom/arhupy.git
 cd arhupy
 pip install -e .
 ```
@@ -94,6 +94,18 @@ from arhupy import estimate_tokens
 
 tokens = estimate_tokens("A short prompt for an LLM.")
 print(tokens)
+```
+
+## Claude Integration
+
+```python
+from arhupy import Prompt, ClaudeClient
+
+client = ClaudeClient(api_key="your-api-key")
+
+prompt = Prompt("You are a {role}. Answer this: {question}")
+response = client.ask_with_template(prompt, role="fitness coach", question="What is progressive overload?")
+print(response)
 ```
 
 ## Contributing

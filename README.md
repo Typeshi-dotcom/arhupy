@@ -42,8 +42,52 @@ print(prompt.fill(role="teacher", language="English"))
 - Export and import prompts or prompt chains as shareable JSON files
 - Estimate token counts with a simple standard-library helper
 - Score prompts and get simple feedback from local heuristics
+- Compare prompts and see scoring differences from the CLI
+- Improve prompts with Claude through a simple command
+- Launch a local web dashboard for scoring and comparison
 - Track prompt template versions with notes
 - No external dependencies
+
+## CLI Usage
+
+Show available commands:
+
+```bash
+arhupy --help
+```
+
+Score a prompt:
+
+```bash
+arhupy score "You are a fitness coach"
+```
+
+Compare two prompts:
+
+```bash
+arhupy diff "You are a coach" "You are a strict fitness coach"
+```
+
+Improve a prompt:
+
+```bash
+arhupy improve "You are a coach" --api-key YOUR_KEY
+```
+
+Save, list, export, and import prompts:
+
+```bash
+arhupy save my_prompt "You are a coach"
+arhupy list
+arhupy export prompts.json
+arhupy import prompts.json
+```
+
+Start the local web dashboard:
+
+```bash
+arhupy web
+```
 
 ## Examples
 
@@ -116,6 +160,8 @@ arhupy diff "You are a fitness coach" "You are a helpful assistant"
 arhupy web
 ```
 
+This starts a local dashboard at `http://localhost:8000`.
+
 ## Saving and Sharing Prompts
 
 ```bash
@@ -130,6 +176,8 @@ arhupy list
 ```bash
 arhupy improve "You are a coach" --api-key YOUR_KEY
 ```
+
+Use a real Claude API key for live AI improvement. The `YOUR_KEY` placeholder runs a local demo improvement so the command can be tested safely.
 
 ## Claude Integration
 

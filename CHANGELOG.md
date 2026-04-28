@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0] - Initial PyPI Release
+
+### Changed
+
+- Prepared package metadata, documentation, and CLI examples for PyPI
+- Marked the project as production-ready
+
 ## [0.9.0] - AI Prompt Improvement
 
 ### Added

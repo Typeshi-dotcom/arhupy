@@ -5,6 +5,7 @@ dist/
 build/
 *.egg-info/
 .env
+*.json
 arhupy_library.json
 arhupy_versions.json
 .DS_Store

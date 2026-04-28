@@ -3,6 +3,7 @@
 import argparse
 
 from .diff import compare_prompts
+from .improver import improve_prompt
 from .library import export_all, import_all, list_all, save
 from .prompt import Prompt
 from .scorer import score_prompt
@@ -19,6 +20,10 @@ def main(argv=None):
 
     diff_parser = subparsers.add_parser("diff", help="Compare two prompts")
     diff_parser.add_argument("prompts", nargs="*", help="Two prompt texts to compare")
+
+    improve_parser = subparsers.add_parser("improve", help="Improve a prompt with Claude")
+    improve_parser.add_argument("prompt", nargs="*", help="Prompt text to improve")
+    improve_parser.add_argument("--api-key", help="Claude API key")
 
     save_parser = subparsers.add_parser("save", help="Save a prompt to the library")
     save_parser.add_argument("name", help="Prompt name")
@@ -44,6 +49,18 @@ def main(argv=None):
         score_1 = score_prompt(prompt_1)["overall_score"]
         score_2 = score_prompt(prompt_2)["overall_score"]
         _print_diff(result, score_1, score_2)
+        return 0
+    if args.command == "improve":
+        prompt_text = " ".join(args.prompt)
+        try:
+            improved = improve_prompt(prompt_text, args.api_key)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        print("Original:")
+        print(prompt_text)
+        print("Improved:")
+        print(improved)
         return 0
     if args.command == "save":
         prompt_text = " ".join(args.prompt)

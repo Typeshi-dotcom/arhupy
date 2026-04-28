@@ -125,6 +125,12 @@ arhupy import prompts.json
 arhupy list
 ```
 
+## AI Prompt Improvement
+
+```bash
+arhupy improve "You are a coach" --api-key YOUR_KEY
+```
+
 ## Claude Integration
 
 ```python

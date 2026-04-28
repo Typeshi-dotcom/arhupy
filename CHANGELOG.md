@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.9.0] - AI Prompt Improvement
+
+### Added
+
+- AI-powered prompt improvement
+
 ## [0.8.0] - Storage Improvements
 
 ### Added

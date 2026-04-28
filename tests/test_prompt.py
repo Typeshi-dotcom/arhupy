@@ -17,6 +17,7 @@ from arhupy import (
     export_all,
     export_chain,
     export_prompt,
+    improve_prompt,
     import_all,
     import_chain,
     import_prompt,
@@ -141,6 +142,30 @@ class TestPrompt(unittest.TestCase):
                 client.ask("Hello, Claude")
 
         self.assertIn("invalid api key", str(context.exception))
+
+    def test_improve_prompt_uses_claude_client(self):
+        """improve_prompt sends an improvement request through ClaudeClient."""
+        with mock.patch("arhupy.improver.ClaudeClient") as client_class:
+            client = client_class.return_value
+            client.ask.return_value = "You are a supportive fitness coach."
+
+            result = improve_prompt("You are a coach", "test-key")
+
+        self.assertEqual(result, "You are a supportive fitness coach.")
+        client_class.assert_called_once_with(api_key="test-key")
+        request_text = client.ask.call_args.args[0]
+        self.assertIn("Improve this prompt", request_text)
+        self.assertIn("You are a coach", request_text)
+
+    def test_improve_prompt_requires_real_api_key(self):
+        """improve_prompt raises a clear error for missing or placeholder keys."""
+        with self.assertRaises(Exception) as missing_context:
+            improve_prompt("You are a coach", "")
+        with self.assertRaises(Exception) as placeholder_context:
+            improve_prompt("You are a coach", "YOUR_KEY")
+
+        self.assertIn("API key is required", str(missing_context.exception))
+        self.assertIn("real Claude API key", str(placeholder_context.exception))
 
     def test_prompt_to_dict_and_from_dict(self):
         """Prompt objects can round-trip through dictionary data."""
@@ -319,6 +344,35 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Prompt 1 score:", contents)
         self.assertIn("Prompt 2 score:", contents)
         self.assertIn("Better prompt:", contents)
+
+    def test_cli_improve_prints_original_and_improved_prompt(self):
+        """The improve CLI command prints original and improved prompt text."""
+        with mock.patch("arhupy.cli.improve_prompt", return_value="Improved prompt") as improve:
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main([
+                    "improve",
+                    "You are a coach",
+                    "--api-key",
+                    "test-key",
+                ])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        improve.assert_called_once_with("You are a coach", "test-key")
+        self.assertIn("Original:", contents)
+        self.assertIn("You are a coach", contents)
+        self.assertIn("Improved:", contents)
+        self.assertIn("Improved prompt", contents)
+
+    def test_cli_improve_handles_missing_api_key_cleanly(self):
+        """The improve CLI command reports a clean error when the key is missing."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["improve", "You are a coach"])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Error:", contents)
+        self.assertIn("API key is required", contents)
 
     def test_cli_web_calls_run_server(self):
         """The web CLI command starts the local server."""

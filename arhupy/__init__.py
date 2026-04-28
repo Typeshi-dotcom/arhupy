@@ -2,6 +2,7 @@
 
 from .chain import PromptChain
 from .claude import ClaudeClient
+from .diff import compare_prompts
 from .exporter import export_chain, export_prompt, import_chain, import_prompt
 from .library import delete, list_all, load, save
 from .prompt import Prompt
@@ -9,7 +10,7 @@ from .scorer import score_prompt
 from .tokens import estimate_tokens
 from .versioning import get_history, print_history, save_version
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 __all__ = [
     "Prompt",
@@ -28,4 +29,5 @@ __all__ = [
     "export_chain",
     "import_chain",
     "score_prompt",
+    "compare_prompts",
 ]

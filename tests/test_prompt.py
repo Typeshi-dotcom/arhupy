@@ -11,6 +11,7 @@ from arhupy import (
     ClaudeClient,
     Prompt,
     PromptChain,
+    compare_prompts,
     estimate_tokens,
     export_chain,
     export_prompt,
@@ -222,6 +223,36 @@ class TestPrompt(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertIn("Score:", contents)
         self.assertIn("Suggestions:", contents)
+
+    def test_compare_prompts_returns_differences(self):
+        """compare_prompts returns length, word, common, and unique differences."""
+        result = compare_prompts("You are a coach", "You are a helpful assistant")
+
+        self.assertEqual(result["length_diff"], len("You are a coach") - len("You are a helpful assistant"))
+        self.assertEqual(result["word_diff"], 4 - 5)
+        self.assertEqual(result["common_words"], ["You", "a", "are"])
+        self.assertEqual(result["unique_to_p1"], ["coach"])
+        self.assertEqual(result["unique_to_p2"], ["assistant", "helpful"])
+
+    def test_cli_diff_prints_comparison_output(self):
+        """The diff CLI command prints prompt comparison and scoring output."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main([
+                "diff",
+                "You are a fitness coach",
+                "You are a helpful assistant",
+            ])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Length difference:", contents)
+        self.assertIn("Word difference:", contents)
+        self.assertIn("Common words:", contents)
+        self.assertIn("Unique to prompt 1:", contents)
+        self.assertIn("Unique to prompt 2:", contents)
+        self.assertIn("Prompt 1 score:", contents)
+        self.assertIn("Prompt 2 score:", contents)
+        self.assertIn("Better prompt:", contents)
 
 
 if __name__ == "__main__":

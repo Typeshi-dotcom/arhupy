@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0] - Prompt Comparison
+
+### Added
+
+- Prompt diff and comparison tool
+
 ## [0.5.0] - Prompt Scoring
 
 ### Added

@@ -104,6 +104,12 @@ print(tokens)
 arhupy score "You are a fitness coach"
 ```
 
+## Prompt Comparison
+
+```bash
+arhupy diff "You are a fitness coach" "You are a helpful assistant"
+```
+
 ## Claude Integration
 
 ```python

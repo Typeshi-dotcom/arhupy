@@ -31,6 +31,34 @@ class Prompt:
         self.values = {}
         self.filled_prompt = None
 
+    def to_dict(self):
+        """Return this prompt as a dictionary for JSON export."""
+        return {
+            "template": self.template,
+            "filled_values": dict(self.values),
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create a Prompt object from exported dictionary data."""
+        if not isinstance(data, dict):
+            raise ValueError("Prompt data must be a dictionary.")
+
+        template = data.get("template")
+        filled_values = data.get("filled_values", {})
+        if not isinstance(template, str):
+            raise ValueError("Prompt data must include a template string.")
+        if not isinstance(filled_values, dict):
+            raise ValueError("Prompt filled_values must be a dictionary.")
+
+        prompt = cls(template)
+        if filled_values:
+            try:
+                prompt.fill(**filled_values)
+            except (KeyError, IndexError, TypeError, ValueError) as exc:
+                raise ValueError(f"Could not fill prompt from saved values: {exc}") from exc
+        return prompt
+
     def __str__(self):
         """Return the filled prompt when available, otherwise the template."""
         return self.filled_prompt if self.filled_prompt is not None else self.template

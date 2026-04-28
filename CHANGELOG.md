@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0] - Export and Import
+
+### Added
+
+- `Prompt.to_dict()` and `Prompt.from_dict()`
+- `PromptChain.to_dict()` and `PromptChain.from_dict()`
+- `export_prompt()`, `import_prompt()`, `export_chain()`, and `import_chain()`
+
 ## [0.2.0] - Claude API Integration
 
 ### Added

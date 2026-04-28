@@ -7,7 +7,18 @@ from io import BytesIO
 from urllib import error
 from unittest import mock
 
-from arhupy import ClaudeClient, Prompt, PromptChain, estimate_tokens, load, save
+from arhupy import (
+    ClaudeClient,
+    Prompt,
+    PromptChain,
+    estimate_tokens,
+    export_chain,
+    export_prompt,
+    import_chain,
+    import_prompt,
+    load,
+    save,
+)
 
 
 class TestPrompt(unittest.TestCase):
@@ -73,6 +84,65 @@ class TestPrompt(unittest.TestCase):
                 client.ask("Hello, Claude")
 
         self.assertIn("invalid api key", str(context.exception))
+
+    def test_prompt_to_dict_and_from_dict(self):
+        """Prompt objects can round-trip through dictionary data."""
+        prompt = Prompt("Hello, {name}.")
+        prompt.fill(name="Arhu")
+
+        data = prompt.to_dict()
+        restored = Prompt.from_dict(data)
+
+        self.assertEqual(data["template"], "Hello, {name}.")
+        self.assertEqual(data["filled_values"], {"name": "Arhu"})
+        self.assertEqual(restored.template, "Hello, {name}.")
+        self.assertEqual(restored.values, {"name": "Arhu"})
+        self.assertEqual(str(restored), "Hello, Arhu.")
+
+    def test_prompt_chain_to_dict_and_from_dict(self):
+        """PromptChain objects can round-trip through dictionary data."""
+        first = Prompt("System: {message}")
+        second = Prompt("User: {message}")
+        first.fill(message="Be direct.")
+        second.fill(message="Explain imports.")
+        chain = PromptChain([first, second])
+
+        data = chain.to_dict()
+        restored = PromptChain.from_dict(data)
+
+        self.assertEqual(len(data["prompts"]), 2)
+        self.assertEqual(restored.build(), "System: Be direct.\nUser: Explain imports.")
+
+    def test_export_prompt_and_import_prompt(self):
+        """Prompt objects can round-trip through a JSON file."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            filepath = os.path.join(temp_dir, "prompt.json")
+            prompt = Prompt("Translate to {language}: {text}")
+            prompt.fill(language="English", text="Hola")
+
+            export_prompt(prompt, filepath)
+            restored = import_prompt(filepath)
+
+            self.assertIsInstance(restored, Prompt)
+            self.assertEqual(restored.template, "Translate to {language}: {text}")
+            self.assertEqual(restored.values, {"language": "English", "text": "Hola"})
+            self.assertEqual(str(restored), "Translate to English: Hola")
+
+    def test_export_chain_and_import_chain(self):
+        """PromptChain objects can round-trip through a JSON file."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            filepath = os.path.join(temp_dir, "chain.json")
+            first = Prompt("System: {instruction}")
+            second = Prompt("User: {task}")
+            first.fill(instruction="Stay practical.")
+            second.fill(task="Create a checklist.")
+            chain = PromptChain([first, second])
+
+            export_chain(chain, filepath)
+            restored = import_chain(filepath)
+
+            self.assertIsInstance(restored, PromptChain)
+            self.assertEqual(restored.build(), "System: Stay practical.\nUser: Create a checklist.")
 
 
 if __name__ == "__main__":

@@ -108,6 +108,51 @@ response = client.ask_with_template(prompt, role="fitness coach", question="What
 print(response)
 ```
 
+## Export And Import
+
+Save a prompt to JSON:
+
+```python
+from arhupy import Prompt, export_prompt
+
+prompt = Prompt("Write a {tone} email about {topic}.")
+prompt.fill(tone="friendly", topic="a project update")
+
+export_prompt(prompt, "email_prompt.json")
+```
+
+Load a prompt from JSON:
+
+```python
+from arhupy import import_prompt
+
+prompt = import_prompt("email_prompt.json")
+print(prompt)
+```
+
+Save a prompt chain to JSON:
+
+```python
+from arhupy import Prompt, PromptChain, export_chain
+
+system = Prompt("System: {instruction}")
+user = Prompt("User: {request}")
+system.fill(instruction="Be concise.")
+user.fill(request="Summarize this report.")
+
+chain = PromptChain([system, user])
+export_chain(chain, "summary_chain.json")
+```
+
+Load a prompt chain from JSON:
+
+```python
+from arhupy import import_chain
+
+chain = import_chain("summary_chain.json")
+print(chain.build())
+```
+
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, test commands, and pull request guidance.

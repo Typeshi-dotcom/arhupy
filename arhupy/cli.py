@@ -3,6 +3,8 @@
 import argparse
 
 from .diff import compare_prompts
+from .library import export_all, import_all, list_all, save
+from .prompt import Prompt
 from .scorer import score_prompt
 from .web import run_server
 
@@ -18,6 +20,17 @@ def main(argv=None):
     diff_parser = subparsers.add_parser("diff", help="Compare two prompts")
     diff_parser.add_argument("prompts", nargs="*", help="Two prompt texts to compare")
 
+    save_parser = subparsers.add_parser("save", help="Save a prompt to the library")
+    save_parser.add_argument("name", help="Prompt name")
+    save_parser.add_argument("prompt", nargs="*", help="Prompt template text")
+
+    export_parser = subparsers.add_parser("export", help="Export saved prompts")
+    export_parser.add_argument("filepath", help="Output JSON file")
+
+    import_parser = subparsers.add_parser("import", help="Import saved prompts")
+    import_parser.add_argument("filepath", help="Input JSON file")
+
+    subparsers.add_parser("list", help="List saved prompts")
     subparsers.add_parser("web", help="Start the local web dashboard")
 
     args = parser.parse_args(argv)
@@ -31,6 +44,22 @@ def main(argv=None):
         score_1 = score_prompt(prompt_1)["overall_score"]
         score_2 = score_prompt(prompt_2)["overall_score"]
         _print_diff(result, score_1, score_2)
+        return 0
+    if args.command == "save":
+        prompt_text = " ".join(args.prompt)
+        save(args.name, Prompt(prompt_text))
+        print(f"Saved prompt: {args.name}")
+        return 0
+    if args.command == "export":
+        export_all(args.filepath)
+        print(f"Exported prompts to {args.filepath}")
+        return 0
+    if args.command == "import":
+        result = import_all(args.filepath)
+        _print_import_result(result)
+        return 0
+    if args.command == "list":
+        list_all()
         return 0
     if args.command == "web":
         run_server()
@@ -71,6 +100,20 @@ def _print_diff(result, score_1, score_2):
 def _format_words(words):
     """Format a list of words for CLI output."""
     return ", ".join(words) if words else "None"
+
+
+def _print_import_result(result):
+    """Print prompt library import results."""
+    imported = len(result["imported"])
+    skipped = len(result["skipped"])
+    print(f"Imported prompts: {imported}")
+    if result["imported"]:
+        for name in result["imported"]:
+            print(f"- {name}")
+    if skipped:
+        print(f"Skipped prompts: {skipped}")
+        for name in result["skipped"]:
+            print(f"- {name}")
 
 
 def _get_diff_prompts(prompts):

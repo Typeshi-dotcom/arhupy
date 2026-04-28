@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0] - Storage Improvements
+
+### Added
+
+- `export_all()` and `import_all()`
+- CLI export and import commands
+- Improved prompt storage system
+
 ## [0.7.0] - Web Dashboard
 
 ### Added

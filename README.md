@@ -116,6 +116,15 @@ arhupy diff "You are a fitness coach" "You are a helpful assistant"
 arhupy web
 ```
 
+## Saving and Sharing Prompts
+
+```bash
+arhupy save my_prompt "You are a coach"
+arhupy export prompts.json
+arhupy import prompts.json
+arhupy list
+```
+
 ## Claude Integration
 
 ```python

@@ -4,13 +4,13 @@ from .chain import PromptChain
 from .claude import ClaudeClient
 from .diff import compare_prompts
 from .exporter import export_chain, export_prompt, import_chain, import_prompt
-from .library import delete, list_all, load, save
+from .library import delete, export_all, import_all, list_all, load, save
 from .prompt import Prompt
 from .scorer import score_prompt
 from .tokens import estimate_tokens
 from .versioning import get_history, print_history, save_version
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 __all__ = [
     "Prompt",
@@ -20,6 +20,8 @@ __all__ = [
     "load",
     "list_all",
     "delete",
+    "export_all",
+    "import_all",
     "estimate_tokens",
     "save_version",
     "get_history",

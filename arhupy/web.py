@@ -5,6 +5,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
 from .diff import compare_prompts
+from .library import _read_library, save
+from .prompt import Prompt
 from .scorer import score_prompt
 
 
@@ -34,8 +36,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
         form = parse_qs(body)
         prompt_1 = form.get("prompt1", [""])[0]
         prompt_2 = form.get("prompt2", [""])[0]
+        action = form.get("action", ["score"])[0]
+        save_name = form.get("save_name", [""])[0].strip()
 
-        if prompt_1.strip() and prompt_2.strip():
+        if action == "save":
+            result_html = render_save_result(save_name, prompt_1)
+        elif prompt_1.strip() and prompt_2.strip():
             result_html = render_comparison(prompt_1, prompt_2)
         else:
             result_html = render_score(prompt_1)
@@ -79,14 +85,20 @@ def render_page(prompt_1="", prompt_2="", result_html=""):
     <label for="prompt2">Prompt 2</label>
     <textarea id="prompt2" name="prompt2">{escape(prompt_2)}</textarea>
 
+    <label for="save_name">Save Prompt 1 As</label>
+    <input id="save_name" name="save_name" type="text" placeholder="my_prompt">
+
     <button type="submit" name="action" value="score">Score Prompt</button>
     <button type="submit" name="action" value="compare">Compare Prompts</button>
+    <button type="submit" name="action" value="save">Save Prompt</button>
   </form>
 
   <div class="output">
     <h2>Output</h2>
     {result_html or "<p>Enter a prompt and choose an action.</p>"}
   </div>
+
+  {render_saved_prompts()}
 </body>
 </html>"""
 
@@ -127,6 +139,45 @@ def render_comparison(prompt_1, prompt_2):
 <p><strong>Prompt 1 score:</strong> {score_1}/10</p>
 <p><strong>Prompt 2 score:</strong> {score_2}/10</p>
 <p><strong>Better prompt:</strong> {better_prompt}</p>"""
+
+
+def render_save_result(name, prompt):
+    """Save Prompt 1 and render a readable result message."""
+    if not name:
+        return "<p>Please enter a name before saving a prompt.</p>"
+    if not prompt.strip():
+        return "<p>Please enter Prompt 1 before saving.</p>"
+
+    save(name, Prompt(prompt))
+    return f"<p>Saved prompt: <strong>{escape(name)}</strong></p>"
+
+
+def render_saved_prompts():
+    """Render saved prompts from the local prompt library."""
+    try:
+        prompts = _read_library()
+    except Exception as exc:
+        message = escape(str(exc))
+        return f"""<section>
+  <h2>Saved Prompts</h2>
+  <p>Could not read saved prompts: {message}</p>
+</section>"""
+
+    if not prompts:
+        return """<section>
+  <h2>Saved Prompts</h2>
+  <p>No saved prompts found.</p>
+</section>"""
+
+    items = "".join(
+        f"<li><strong>{escape(name)}</strong>: {escape(template)}</li>"
+        for name, template in sorted(prompts.items())
+    )
+    return f"""<section>
+  <h2>Saved Prompts</h2>
+  <p>{len(prompts)} saved prompt(s)</p>
+  <ul>{items}</ul>
+</section>"""
 
 
 def _format_words(words):

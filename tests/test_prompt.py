@@ -1,5 +1,6 @@
 """Unit tests for arhupy."""
 
+import json
 import os
 import tempfile
 import unittest
@@ -13,16 +14,19 @@ from arhupy import (
     PromptChain,
     compare_prompts,
     estimate_tokens,
+    export_all,
     export_chain,
     export_prompt,
+    import_all,
     import_chain,
     import_prompt,
+    list_all,
     load,
     save,
     score_prompt,
 )
 from arhupy.cli import main as cli_main
-from arhupy.web import render_comparison, render_page, render_score
+from arhupy.web import render_comparison, render_page, render_save_result, render_score
 
 
 class TestPrompt(unittest.TestCase):
@@ -68,6 +72,55 @@ class TestPrompt(unittest.TestCase):
                 self.assertIsInstance(loaded, Prompt)
                 self.assertEqual(loaded.template, "Hello, {name}.")
                 self.assertEqual(loaded.fill(name="Arhu"), "Hello, Arhu.")
+            finally:
+                os.chdir(original_cwd)
+
+    def test_export_all_and_import_all_merge_without_overwriting(self):
+        """export_all and import_all share libraries without overwriting conflicts."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                save("existing", Prompt("Keep this."))
+                export_path = os.path.join(temp_dir, "prompts.json")
+                with open(export_path, "w", encoding="utf-8") as file:
+                    json.dump(
+                        {
+                            "existing": "Do not overwrite.",
+                            "new_prompt": "You are a coach.",
+                        },
+                        file,
+                    )
+
+                result = import_all(export_path)
+                second_export = os.path.join(temp_dir, "second_export.json")
+                export_all(second_export)
+
+                self.assertEqual(result["imported"], ["new_prompt"])
+                self.assertEqual(result["skipped"], ["existing"])
+                self.assertEqual(load("existing").template, "Keep this.")
+                self.assertEqual(load("new_prompt").template, "You are a coach.")
+                with open(second_export, "r", encoding="utf-8") as file:
+                    exported = json.load(file)
+                self.assertEqual(exported["existing"], "Keep this.")
+                self.assertEqual(exported["new_prompt"], "You are a coach.")
+            finally:
+                os.chdir(original_cwd)
+
+    def test_list_all_prints_count_and_prompt_names(self):
+        """list_all prints a count and formatted prompt names."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                save("alpha", Prompt("Prompt A"))
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    list_all()
+
+                contents = output.getvalue()
+                self.assertIn("Saved prompts: 1 prompt", contents)
+                self.assertIn("- alpha", contents)
             finally:
                 os.chdir(original_cwd)
 
@@ -275,6 +328,29 @@ class TestPrompt(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         run_server.assert_called_once_with()
 
+    def test_cli_storage_commands_save_export_import_and_list(self):
+        """Storage CLI commands can save, export, import, and list prompts."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                export_path = os.path.join(temp_dir, "prompts.json")
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    self.assertEqual(cli_main(["save", "test", "You are a coach"]), 0)
+                    self.assertEqual(cli_main(["export", export_path]), 0)
+                    self.assertEqual(cli_main(["import", export_path]), 0)
+                    self.assertEqual(cli_main(["list"]), 0)
+
+                contents = output.getvalue()
+                self.assertIn("Saved prompt: test", contents)
+                self.assertIn("Exported prompts to", contents)
+                self.assertIn("Skipped prompts: 1", contents)
+                self.assertIn("Saved prompts: 1 prompt", contents)
+                self.assertIn("- test", contents)
+            finally:
+                os.chdir(original_cwd)
+
     def test_web_render_helpers_include_dashboard_output(self):
         """Web render helpers produce dashboard, scoring, and comparison HTML."""
         page = render_page()
@@ -290,6 +366,22 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Suggestions", score)
         self.assertIn("Prompt Comparison", comparison)
         self.assertIn("Better prompt", comparison)
+
+    def test_web_can_save_prompt_and_show_saved_prompts(self):
+        """The web dashboard can save Prompt 1 and show saved prompts."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                result = render_save_result("web_prompt", "You are a coach")
+                page = render_page()
+
+                self.assertIn("Saved prompt", result)
+                self.assertIn("Saved Prompts", page)
+                self.assertIn("web_prompt", page)
+                self.assertIn("You are a coach", page)
+            finally:
+                os.chdir(original_cwd)
 
 
 if __name__ == "__main__":

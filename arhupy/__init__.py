@@ -10,11 +10,11 @@ from .interactive import run_interactive
 from .library import delete, export_all, import_all, list_all, load, save
 from .prompt import Prompt
 from .scorer import score_prompt
-from .templates import get_template, list_templates
+from .templates import fill_template, get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history as get_version_history, print_history, save_version
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 
 def get_history(*args, **kwargs):
@@ -47,6 +47,7 @@ __all__ = [
     "improve_prompt",
     "list_templates",
     "get_template",
+    "fill_template",
     "add_history",
     "get_prompt_by_index",
     "get_version_history",

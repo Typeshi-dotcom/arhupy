@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0] - Template Autofill
+
+### Added
+
+- Interactive template filling
+
 ## [1.4.0] - Interactive Mode
 
 ### Added

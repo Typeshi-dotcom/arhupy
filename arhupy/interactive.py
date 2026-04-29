@@ -5,6 +5,7 @@ from .improver import improve_prompt
 from .library import save
 from .prompt import Prompt
 from .scorer import score_prompt
+from .templates import fill_template
 
 
 def run_interactive():
@@ -27,8 +28,10 @@ def run_interactive():
         elif choice == "5":
             print("Goodbye.")
             break
+        elif choice == "6":
+            _handle_fill_template()
         else:
-            print("Invalid option. Please choose 1, 2, 3, 4, or 5.")
+            print("Invalid option. Please choose 1, 2, 3, 4, 5, or 6.")
 
 
 def _print_menu():
@@ -39,6 +42,7 @@ def _print_menu():
     print("3. Compare with another prompt")
     print("4. Save prompt")
     print("5. Exit")
+    print("6. Fill template")
 
 
 def _handle_score(prompt_text):
@@ -86,6 +90,19 @@ def _handle_save(prompt_text):
 
     save(name, Prompt(prompt_text))
     print(f"Saved prompt: {name}")
+
+
+def _handle_fill_template():
+    """Fill a built-in prompt template interactively."""
+    template_name = input("Enter template name: ").strip()
+    try:
+        filled = fill_template(template_name)
+    except Exception as exc:
+        print(f"Error: {exc}")
+        return
+
+    print("Filled prompt:")
+    print(filled)
 
 
 def _format_words(words):

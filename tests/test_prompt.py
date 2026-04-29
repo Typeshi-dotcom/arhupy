@@ -18,6 +18,7 @@ from arhupy import (
     export_all,
     export_chain,
     export_prompt,
+    fill_template,
     get_template,
     get_history,
     get_prompt_by_index,
@@ -352,6 +353,34 @@ class TestPrompt(unittest.TestCase):
 
         self.assertIn("Template not found", str(context.exception))
 
+    def test_fill_template_replaces_placeholder(self):
+        """fill_template asks for placeholder values and returns a filled prompt."""
+        with mock.patch("builtins.input", return_value="recursion"):
+            result = fill_template("coding")
+
+        self.assertEqual(
+            result,
+            "You are a senior developer. Explain recursion in simple terms.",
+        )
+
+    def test_fill_template_replaces_multiple_placeholders(self):
+        """fill_template replaces every placeholder in a template."""
+        values = iter(["weekly workout plan", "building strength"])
+        with mock.patch("builtins.input", side_effect=lambda _: next(values)):
+            result = fill_template("fitness")
+
+        self.assertEqual(
+            result,
+            "You are a fitness coach. Create a weekly workout plan for building strength.",
+        )
+
+    def test_fill_template_missing_template_raises_clear_error(self):
+        """fill_template reports missing template names clearly."""
+        with self.assertRaises(Exception) as context:
+            fill_template("unknown")
+
+        self.assertIn("Template not found", str(context.exception))
+
     def test_cli_templates_commands_print_templates(self):
         """The templates CLI commands list and print built-in templates."""
         with mock.patch("sys.stdout", new_callable=StringIO) as list_output:
@@ -369,6 +398,23 @@ class TestPrompt(unittest.TestCase):
         """The template CLI command reports invalid names cleanly."""
         with mock.patch("sys.stdout", new_callable=StringIO) as output:
             exit_code = cli_main(["template", "unknown"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Error: Template not found", output.getvalue())
+
+    def test_cli_fill_prints_filled_template(self):
+        """The fill CLI command fills and prints a built-in template."""
+        with mock.patch("builtins.input", return_value="recursion"):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main(["fill", "coding"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Explain recursion", output.getvalue())
+
+    def test_cli_fill_handles_missing_template(self):
+        """The fill CLI command reports missing template names cleanly."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["fill", "unknown"])
 
         self.assertEqual(exit_code, 1)
         self.assertIn("Error: Template not found", output.getvalue())
@@ -512,6 +558,17 @@ class TestPrompt(unittest.TestCase):
                 run_interactive()
 
         self.assertIn("Invalid option", output.getvalue())
+
+    def test_interactive_fill_template_and_exit(self):
+        """Interactive mode can fill a built-in template and exit."""
+        inputs = iter(["You are a coach", "6", "coding", "recursion", "5"])
+        with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                run_interactive()
+
+        contents = output.getvalue()
+        self.assertIn("Filled prompt:", contents)
+        self.assertIn("Explain recursion", contents)
 
     def test_cli_interactive_calls_run_interactive(self):
         """The interactive CLI command starts interactive mode."""

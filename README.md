@@ -116,6 +116,12 @@ Start interactive mode:
 arhupy interactive
 ```
 
+Fill a built-in template:
+
+```bash
+arhupy fill coding
+```
+
 ## Examples
 
 ### Prompt
@@ -222,6 +228,23 @@ print(list_templates())
 template = get_template("coding")
 prompt = Prompt(template)
 print(prompt.fill(concept="recursion"))
+```
+
+## Template Autofill
+
+Fill a built-in template from the terminal. `arhupy` asks for each placeholder and prints the completed prompt.
+
+```bash
+arhupy fill coding
+```
+
+In Python:
+
+```python
+from arhupy import fill_template
+
+prompt = fill_template("fitness")
+print(prompt)
 ```
 
 ## Prompt History

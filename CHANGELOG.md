@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.0] - UI Upgrade
+
+### Added
+
+- Improved web dashboard layout and usability
+
 ## [2.0.0] - Plugin System
 
 ### Added

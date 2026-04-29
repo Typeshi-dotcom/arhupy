@@ -42,7 +42,13 @@ from arhupy import (
 )
 from arhupy.api import handle_api_request
 from arhupy.cli import main as cli_main
-from arhupy.web import render_comparison, render_page, render_save_result, render_score
+from arhupy.web import (
+    render_comparison,
+    render_improvement,
+    render_page,
+    render_save_result,
+    render_score,
+)
 
 
 class TestPrompt(unittest.TestCase):
@@ -1087,10 +1093,21 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Prompt 2", page)
         self.assertIn("Score Prompt", page)
         self.assertIn("Compare Prompts", page)
+        self.assertIn("Improve Prompt", page)
         self.assertIn("Prompt Score", score)
-        self.assertIn("Suggestions", score)
+        self.assertIn("Strengths", score)
+        self.assertIn("Improvements", score)
         self.assertIn("Prompt Comparison", comparison)
         self.assertIn("Better prompt", comparison)
+
+    def test_web_render_improvement_uses_improver(self):
+        """The web dashboard can render improved prompt output."""
+        with mock.patch("arhupy.web.improve_prompt", return_value="Improved prompt"):
+            result = render_improvement("You are a coach", "test-key")
+
+        self.assertIn("Improved Prompt", result)
+        self.assertIn("Original:", result)
+        self.assertIn("Improved prompt", result)
 
     def test_web_can_save_prompt_and_show_saved_prompts(self):
         """The web dashboard can save Prompt 1 and show saved prompts."""

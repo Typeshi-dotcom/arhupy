@@ -269,10 +269,28 @@ http://localhost:8000
 
 The dashboard includes:
 
-- Prompt scoring
+- Score, Compare, and Improve tabs
+- Prompt scoring with strengths and improvements
 - Prompt comparison
+- AI prompt improvement with a Claude API key field
 - Saved prompt display
 - Save prompt button
+
+## Improved Web Dashboard
+
+The local dashboard uses only Python's standard-library `http.server`, but gives you a cleaner browser interface for day-to-day prompt work.
+
+```bash
+arhupy web
+```
+
+Open `http://localhost:8000` and use:
+
+| Tab | Inputs | Output |
+| --- | --- | --- |
+| Score | One prompt textarea | Score, strengths, and improvements |
+| Compare | Two prompt textareas | Differences, prompt scores, and better prompt |
+| Improve | Prompt textarea plus API key field | Claude-improved prompt text |
 
 ### Start API mode
 

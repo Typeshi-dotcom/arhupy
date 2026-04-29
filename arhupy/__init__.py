@@ -23,7 +23,7 @@ from .templates import fill_template, get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history as get_version_history, print_history, save_version
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 
 def get_history(*args, **kwargs):

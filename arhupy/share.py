@@ -36,6 +36,15 @@ def get_shared(share_id):
     return prompt
 
 
+def get_all_shared():
+    """Return all shared prompts with their IDs and prompt text."""
+    data = _read_shared()
+    return [
+        {"id": share_id, "prompt": prompt}
+        for share_id, prompt in sorted(data.items())
+    ]
+
+
 def _read_shared():
     """Read shared prompt data from local JSON storage."""
     try:

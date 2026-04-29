@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.5.0] - Explore Page
+
+### Added
+
+- Public prompt marketplace for locally shared prompts
+
 ## [2.4.0] - AI Prompt Generator
 
 ### Added

@@ -33,6 +33,7 @@ Prompt engineering can get messy fast. `arhupy` keeps the useful parts small and
 | Generate prompts | Turn short ideas into structured prompts |
 | Run locally | CLI, web dashboard, and HTTP API |
 | Share prompts | Local share links with scored prompt pages |
+| Browse shared prompts | Explore page with local prompt cards |
 | Extend behavior | Simple plugin system |
 
 ## Installation
@@ -90,6 +91,7 @@ You are a fitness coach. Explain progressive overload in simple terms.
 | Sharing | `export_prompt()`, `import_prompt()` | `arhupy export`, `arhupy import` |
 | History | `add_history()`, `get_history()` | `arhupy history`, `arhupy reuse` |
 | Sharing | `save_shared()`, `get_shared()` | `arhupy share "..."` |
+| Explore prompts | `get_all_shared()` | Open `/explore` in the web dashboard |
 | Claude integration | `ClaudeClient`, `improve_prompt()` | `arhupy improve` |
 | AI generation | `generate_prompt()` | `arhupy generate "..."` |
 | Web dashboard | `run_server()` | `arhupy web` |
@@ -287,8 +289,10 @@ The dashboard includes:
 - Prompt scoring with strengths and improvements
 - Prompt comparison
 - AI prompt improvement with a Claude API key field
+- AI prompt generation from short ideas
 - Saved prompt display
 - Save prompt button
+- Explore Prompts link for browsing shared prompts
 
 ## Improved Web Dashboard
 
@@ -305,6 +309,7 @@ Open `http://localhost:8000` and use:
 | Score | One prompt textarea | Score, strengths, and improvements |
 | Compare | Two prompt textareas | Differences, prompt scores, and better prompt |
 | Improve | Prompt textarea plus API key field | Claude-improved prompt text |
+| Generate | Prompt idea plus API key field | Structured generated prompt |
 
 ### Start API mode
 
@@ -365,6 +370,27 @@ Share link: http://localhost:8000/share/abc123
 ```
 
 Start the dashboard with `arhupy web`, open the share link, and `arhupy` shows the prompt with its score, strengths, and improvements.
+
+### Explore prompts
+
+The dashboard includes a simple local Explore page for prompts you have shared.
+
+```bash
+arhupy share "You are a coach. Explain warmups step by step."
+arhupy web
+```
+
+Then open:
+
+```text
+http://localhost:8000/explore
+```
+
+The Explore page shows each shared prompt as a card with:
+
+- Prompt text
+- Copy button
+- Link to the full share page with scoring details
 
 ## Python API Examples
 
@@ -585,11 +611,12 @@ class EchoPlugin(ArhupyPlugin):
 ### Sharing prompts
 
 ```python
-from arhupy import get_shared, save_shared
+from arhupy import get_all_shared, get_shared, save_shared
 
 share_id = save_shared("You are a coach. Explain warmups step by step.")
 print(f"http://localhost:8000/share/{share_id}")
 print(get_shared(share_id))
+print(get_all_shared())
 ```
 
 ## Local Files Created By arhupy

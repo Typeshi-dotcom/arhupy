@@ -3,7 +3,7 @@
 import os
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, unquote
+from urllib.parse import parse_qs, unquote, urlparse
 
 from .diff import compare_prompts
 from .generator import generate_prompt
@@ -11,7 +11,7 @@ from .improver import improve_prompt
 from .library import _read_library, save
 from .prompt import Prompt
 from .scorer import score_prompt
-from .share import get_shared
+from .share import get_all_shared, get_shared
 
 
 def run_server(host="0.0.0.0", port=None):
@@ -34,8 +34,13 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Serve the dashboard HTML page."""
-        if self.path.startswith("/share/"):
-            share_id = unquote(self.path.removeprefix("/share/")).strip()
+        path = urlparse(self.path).path
+        if path == "/explore":
+            self._send_html(render_explore_page())
+            return
+
+        if path.startswith("/share/"):
+            share_id = unquote(path.removeprefix("/share/")).strip()
             self._send_html(render_shared_prompt(share_id))
             return
 
@@ -135,6 +140,12 @@ def render_page(
     h1 {{ margin: 0 0 8px; font-size: 2.2rem; }}
     h2, h3 {{ margin-top: 0; }}
     .subtitle {{ margin: 0; color: #5b6678; }}
+    .top-links {{ margin-top: 14px; }}
+    .top-links a {{
+      color: #0f5fa8;
+      font-weight: 700;
+      text-decoration: none;
+    }}
     .tabs {{
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -226,6 +237,9 @@ def render_page(
     <header>
       <h1>arhupy Dashboard</h1>
       <p class="subtitle">Score, compare, improve, and save prompts locally.</p>
+      <nav class="top-links" aria-label="Dashboard links">
+        <a href="/explore">Explore Prompts</a>
+      </nav>
     </header>
 
     <section class="tabs" aria-label="Dashboard tools">
@@ -301,6 +315,111 @@ def render_page(
   </main>
 </body>
 </html>"""
+
+
+def render_explore_page():
+    """Render the shared prompt marketplace page."""
+    try:
+        shared_prompts = get_all_shared()
+    except Exception as exc:
+        cards = f"<p>Could not load shared prompts: {escape(str(exc))}</p>"
+    else:
+        if not shared_prompts:
+            cards = "<p>No shared prompts found yet. Share a prompt to see it here.</p>"
+        else:
+            cards = "".join(
+                _render_prompt_card(item["id"], item["prompt"])
+                for item in shared_prompts
+            )
+
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Explore Prompts</title>
+  <style>
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      background: #f5f7fb;
+      color: #18212f;
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+    }}
+    main {{
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0;
+    }}
+    header {{ margin-bottom: 22px; }}
+    h1 {{ margin: 0 0 8px; font-size: 2.2rem; }}
+    a {{ color: #0f5fa8; font-weight: 700; text-decoration: none; }}
+    .subtitle {{ margin: 0; color: #5b6678; }}
+    .explore-list {{
+      max-height: 70vh;
+      overflow-y: auto;
+      padding-right: 6px;
+    }}
+    .prompt-card {{
+      background: #ffffff;
+      border: 1px solid #d5dbea;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 24px rgba(26, 39, 68, 0.06);
+    }}
+    .prompt-text {{
+      white-space: pre-wrap;
+      background: #fbfcff;
+      border: 1px solid #e1e6f0;
+      border-radius: 8px;
+      padding: 14px;
+    }}
+    .card-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+    }}
+    button {{
+      border: 0;
+      border-radius: 6px;
+      background: #0f5fa8;
+      color: #ffffff;
+      padding: 9px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }}
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Explore Prompts</h1>
+      <p class="subtitle">Browse prompts shared from your local arhupy dashboard.</p>
+      <p><a href="/">Back to dashboard</a></p>
+    </header>
+    <section class="explore-list" aria-label="Shared prompts">
+      {cards}
+    </section>
+  </main>
+</body>
+</html>"""
+
+
+def _render_prompt_card(share_id, prompt):
+    """Render one shared prompt card for the explore page."""
+    escaped_prompt = escape(prompt)
+    prompt_attribute = escape(prompt, quote=True)
+    share_url = f"/share/{escape(share_id, quote=True)}"
+    return f"""<article class="prompt-card">
+  <p class="prompt-text">{escaped_prompt}</p>
+  <div class="card-actions">
+    <button type="button" data-prompt="{prompt_attribute}" onclick="navigator.clipboard.writeText(this.dataset.prompt)">Copy</button>
+    <a href="{share_url}">Open share page</a>
+  </div>
+</article>"""
 
 
 def render_score(prompt):

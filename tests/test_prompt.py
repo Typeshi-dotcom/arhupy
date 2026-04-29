@@ -23,6 +23,7 @@ from arhupy import (
     export_prompt,
     fill_template,
     generate_prompt,
+    get_all_shared,
     get_template,
     get_history,
     get_plugin,
@@ -50,6 +51,7 @@ from arhupy.web import (
     render_comparison,
     render_generation,
     render_improvement,
+    render_explore_page,
     render_page,
     render_save_result,
     render_shared_prompt,
@@ -212,6 +214,46 @@ class TestPrompt(unittest.TestCase):
                 os.chdir(original_cwd)
 
         self.assertEqual(prompt, "You are a coach.")
+
+    def test_get_all_shared_returns_shared_prompts(self):
+        """get_all_shared returns saved prompts with IDs and prompt text."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                first_id = save_shared("You are a coach.")
+                second_id = save_shared("Explain warmups step by step.")
+                shared = get_all_shared()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(len(shared), 2)
+        self.assertEqual(
+            sorted(item["id"] for item in shared),
+            sorted([first_id, second_id]),
+        )
+        self.assertIn(
+            {"id": first_id, "prompt": "You are a coach."},
+            shared,
+        )
+        self.assertIn(
+            {"id": second_id, "prompt": "Explain warmups step by step."},
+            shared,
+        )
+
+    def test_get_all_shared_empty_state(self):
+        """get_all_shared returns an empty list when no prompts are shared."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                shared = get_all_shared()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(shared, [])
 
     def test_get_shared_invalid_id_raises_clear_error(self):
         """get_shared reports invalid share IDs cleanly."""
@@ -1232,6 +1274,7 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Compare Prompts", page)
         self.assertIn("Improve Prompt", page)
         self.assertIn("Generate Prompt", page)
+        self.assertIn("Explore Prompts", page)
         self.assertIn("Prompt Score", score)
         self.assertIn("Strengths", score)
         self.assertIn("Improvements", score)
@@ -1272,6 +1315,37 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("You are a coach.", result)
         self.assertIn("Prompt Score", result)
         self.assertIn("Strengths", result)
+
+    def test_web_render_explore_page_shows_shared_prompts(self):
+        """The explore page shows shared prompt cards."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                share_id = save_shared("You are a coach.")
+                result = render_explore_page()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Explore Prompts", result)
+        self.assertIn("You are a coach.", result)
+        self.assertIn(f"/share/{share_id}", result)
+        self.assertIn("Copy", result)
+
+    def test_web_render_explore_page_empty_state(self):
+        """The explore page handles an empty shared prompt store."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                result = render_explore_page()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Explore Prompts", result)
+        self.assertIn("No shared prompts found yet", result)
 
     def test_web_render_shared_prompt_invalid_id(self):
         """The web dashboard renders a clean message for missing share IDs."""

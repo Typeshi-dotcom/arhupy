@@ -11,7 +11,7 @@ from .improver import improve_prompt
 from .library import _read_library, save
 from .prompt import Prompt
 from .scorer import score_prompt
-from .share import get_all_shared, get_shared
+from .share import get_all_shared, get_shared, get_trending, upvote_prompt
 
 
 def run_server(host="0.0.0.0", port=None):
@@ -48,9 +48,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         """Handle prompt scoring and comparison form submissions."""
+        path = urlparse(self.path).path
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length).decode("utf-8")
         form = parse_qs(body)
+        if path == "/upvote":
+            self._handle_upvote(form)
+            return
+
         prompt_1 = form.get("prompt1", [""])[0]
         prompt_2 = form.get("prompt2", [""])[0]
         improve_prompt_text = form.get("improve_prompt", [""])[0]
@@ -102,6 +107,27 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def _send_redirect(self, location):
+        """Redirect the browser to another local dashboard page."""
+        self.send_response(303)
+        self.send_header("Location", location)
+        self.end_headers()
+
+    def _handle_upvote(self, form):
+        """Handle an upvote submission from the explore page."""
+        share_id = form.get("share_id", [""])[0].strip()
+        next_url = form.get("next", ["/explore"])[0].strip() or "/explore"
+        if not next_url.startswith("/") or next_url.startswith("//"):
+            next_url = "/explore"
+
+        try:
+            upvote_prompt(share_id)
+        except Exception as exc:
+            self._send_html(render_explore_page(message=f"Could not upvote prompt: {exc}"))
+            return
+
+        self._send_redirect(next_url)
 
 
 def render_page(
@@ -317,10 +343,10 @@ def render_page(
 </html>"""
 
 
-def render_explore_page():
+def render_explore_page(message=""):
     """Render the shared prompt marketplace page."""
     try:
-        shared_prompts = get_all_shared()
+        shared_prompts = get_trending()
     except Exception as exc:
         cards = f"<p>Could not load shared prompts: {escape(str(exc))}</p>"
     else:
@@ -332,6 +358,7 @@ def render_explore_page():
                 for item in shared_prompts
             )
 
+    message_html = f'<p class="notice">{escape(message)}</p>' if message else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -355,6 +382,13 @@ def render_explore_page():
     h1 {{ margin: 0 0 8px; font-size: 2.2rem; }}
     a {{ color: #0f5fa8; font-weight: 700; text-decoration: none; }}
     .subtitle {{ margin: 0; color: #5b6678; }}
+    .notice {{
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      color: #9a3412;
+      padding: 12px;
+    }}
     .explore-list {{
       max-height: 70vh;
       overflow-y: auto;
@@ -382,6 +416,19 @@ def render_explore_page():
       align-items: center;
       margin-top: 12px;
     }}
+    .upvotes {{
+      display: inline-block;
+      margin: 10px 0 0;
+      font-weight: 700;
+      color: #475569;
+    }}
+    .upvote-form {{
+      display: inline;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }}
     button {{
       border: 0;
       border-radius: 6px;
@@ -400,6 +447,7 @@ def render_explore_page():
       <p class="subtitle">Browse prompts shared from your local arhupy dashboard.</p>
       <p><a href="/">Back to dashboard</a></p>
     </header>
+    {message_html}
     <section class="explore-list" aria-label="Shared prompts">
       {cards}
     </section>
@@ -410,13 +458,20 @@ def render_explore_page():
 
 def _render_prompt_card(share_id, prompt):
     """Render one shared prompt card for the explore page."""
+    entry = _find_shared_entry(share_id)
     escaped_prompt = escape(prompt)
     prompt_attribute = escape(prompt, quote=True)
     share_url = f"/share/{escape(share_id, quote=True)}"
     return f"""<article class="prompt-card">
   <p class="prompt-text">{escaped_prompt}</p>
+  <p class="upvotes">Upvotes: {entry['upvotes']}</p>
   <div class="card-actions">
     <button type="button" data-prompt="{prompt_attribute}" onclick="navigator.clipboard.writeText(this.dataset.prompt)">Copy</button>
+    <form class="upvote-form" method="post" action="/upvote">
+      <input type="hidden" name="share_id" value="{escape(share_id, quote=True)}">
+      <input type="hidden" name="next" value="/explore">
+      <button type="submit">👍 Upvote</button>
+    </form>
     <a href="{share_url}">Open share page</a>
   </div>
 </article>"""
@@ -505,6 +560,7 @@ def render_shared_prompt(share_id):
     """Render a shared prompt page."""
     try:
         prompt = get_shared(share_id)
+        entry = _find_shared_entry(share_id)
     except Exception as exc:
         return f"""<!doctype html>
 <html lang="en">
@@ -570,6 +626,7 @@ def render_shared_prompt(share_id):
     <section class="card">
       <h1>Shared Prompt</h1>
       <p class="prompt">{escape(prompt)}</p>
+      <p class="metric">Upvotes: {entry['upvotes']}</p>
     </section>
     <section class="card">
       {score_html}
@@ -622,3 +679,11 @@ def render_saved_prompts():
 def _format_words(words):
     """Format a list of words for HTML output."""
     return ", ".join(words) if words else "None"
+
+
+def _find_shared_entry(share_id):
+    """Return one shared prompt entry from normalized shared data."""
+    for entry in get_all_shared():
+        if entry["id"] == share_id:
+            return entry
+    raise Exception(f"Shared prompt not found: {share_id}")

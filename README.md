@@ -34,6 +34,7 @@ Prompt engineering can get messy fast. `arhupy` keeps the useful parts small and
 | Run locally | CLI, web dashboard, and HTTP API |
 | Share prompts | Local share links with scored prompt pages |
 | Browse shared prompts | Explore page with local prompt cards |
+| Rank shared prompts | Upvotes and trending prompt sorting |
 | Extend behavior | Simple plugin system |
 
 ## Installation
@@ -92,6 +93,7 @@ You are a fitness coach. Explain progressive overload in simple terms.
 | History | `add_history()`, `get_history()` | `arhupy history`, `arhupy reuse` |
 | Sharing | `save_shared()`, `get_shared()` | `arhupy share "..."` |
 | Explore prompts | `get_all_shared()` | Open `/explore` in the web dashboard |
+| Upvotes | `upvote_prompt()`, `get_trending()` | `arhupy upvote <id>` |
 | Claude integration | `ClaudeClient`, `improve_prompt()` | `arhupy improve` |
 | AI generation | `generate_prompt()` | `arhupy generate "..."` |
 | Web dashboard | `run_server()` | `arhupy web` |
@@ -392,6 +394,24 @@ The Explore page shows each shared prompt as a card with:
 - Copy button
 - Link to the full share page with scoring details
 
+### Upvotes and Trending
+
+Shared prompts can be upvoted from the Explore page or the CLI. Trending prompts are sorted by highest upvote count first.
+
+```bash
+arhupy share "You are a coach. Explain warmups step by step."
+arhupy upvote abc123
+arhupy web
+```
+
+Open:
+
+```text
+http://localhost:8000/explore
+```
+
+Each prompt card shows its upvote count and a `👍 Upvote` button. The share page also shows the current upvote count for that prompt.
+
 ## Python API Examples
 
 ### Prompt
@@ -611,12 +631,14 @@ class EchoPlugin(ArhupyPlugin):
 ### Sharing prompts
 
 ```python
-from arhupy import get_all_shared, get_shared, save_shared
+from arhupy import get_all_shared, get_shared, get_trending, save_shared, upvote_prompt
 
 share_id = save_shared("You are a coach. Explain warmups step by step.")
+upvote_prompt(share_id)
 print(f"http://localhost:8000/share/{share_id}")
 print(get_shared(share_id))
 print(get_all_shared())
+print(get_trending())
 ```
 
 ## Local Files Created By arhupy

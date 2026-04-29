@@ -20,12 +20,12 @@ from .library import delete, export_all, import_all, list_all, load, save
 from .plugins import ArhupyPlugin, get_plugin, load_plugins
 from .prompt import Prompt
 from .scorer import score_prompt
-from .share import get_all_shared, get_shared, save_shared
+from .share import get_all_shared, get_shared, get_trending, save_shared, upvote_prompt
 from .templates import fill_template, get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history as get_version_history, print_history, save_version
 
-__version__ = "2.5.0"
+__version__ = "2.6.0"
 
 
 def get_history(*args, **kwargs):
@@ -63,6 +63,8 @@ __all__ = [
     "save_shared",
     "get_shared",
     "get_all_shared",
+    "upvote_prompt",
+    "get_trending",
     "compare_prompts",
     "improve_prompt",
     "list_templates",

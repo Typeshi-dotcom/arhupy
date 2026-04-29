@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0] - Upvotes
+
+### Added
+
+- Upvote system for shared prompts
+- Trending prompts sorted by upvote count
+
 ## [2.5.0] - Explore Page
 
 ### Added

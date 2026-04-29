@@ -25,6 +25,7 @@ from arhupy import (
     generate_prompt,
     get_all_shared,
     get_template,
+    get_trending,
     get_history,
     get_plugin,
     get_shared,
@@ -43,6 +44,7 @@ from arhupy import (
     save_shared,
     save_version,
     score_prompt,
+    upvote_prompt,
 )
 from arhupy.api import handle_api_request
 from arhupy.cli import main as cli_main
@@ -234,11 +236,11 @@ class TestPrompt(unittest.TestCase):
             sorted([first_id, second_id]),
         )
         self.assertIn(
-            {"id": first_id, "prompt": "You are a coach."},
+            {"id": first_id, "prompt": "You are a coach.", "upvotes": 0},
             shared,
         )
         self.assertIn(
-            {"id": second_id, "prompt": "Explain warmups step by step."},
+            {"id": second_id, "prompt": "Explain warmups step by step.", "upvotes": 0},
             shared,
         )
 
@@ -254,6 +256,59 @@ class TestPrompt(unittest.TestCase):
                 os.chdir(original_cwd)
 
         self.assertEqual(shared, [])
+
+    def test_upvote_prompt_increments_count(self):
+        """upvote_prompt increments a shared prompt's upvote count."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                share_id = save_shared("You are a coach.")
+                first_count = upvote_prompt(share_id)
+                second_count = upvote_prompt(share_id)
+                shared = get_all_shared()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(first_count, 1)
+        self.assertEqual(second_count, 2)
+        self.assertEqual(shared[0]["upvotes"], 2)
+
+    def test_upvote_prompt_invalid_id_raises_clear_error(self):
+        """upvote_prompt reports invalid share IDs without crashing."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                with self.assertRaises(Exception) as context:
+                    upvote_prompt("missing")
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Shared prompt not found", str(context.exception))
+
+    def test_get_trending_sorts_by_upvotes(self):
+        """get_trending returns shared prompts sorted by highest upvotes first."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                low_id = save_shared("Low votes")
+                high_id = save_shared("High votes")
+                upvote_prompt(low_id)
+                upvote_prompt(high_id)
+                upvote_prompt(high_id)
+                trending = get_trending()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(trending[0]["id"], high_id)
+        self.assertEqual(trending[0]["upvotes"], 2)
+        self.assertEqual(trending[1]["id"], low_id)
+        self.assertEqual(trending[1]["upvotes"], 1)
 
     def test_get_shared_invalid_id_raises_clear_error(self):
         """get_shared reports invalid share IDs cleanly."""
@@ -1096,6 +1151,39 @@ class TestPrompt(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertIn("Share link: http://localhost:8000/share/", output.getvalue())
 
+    def test_cli_upvote_increments_shared_prompt(self):
+        """The upvote CLI command increments a shared prompt's upvotes."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                share_id = save_shared("You are a coach.")
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    exit_code = cli_main(["upvote", share_id])
+                shared = get_all_shared()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("upvote(s)", output.getvalue())
+        self.assertEqual(shared[0]["upvotes"], 1)
+
+    def test_cli_upvote_handles_invalid_id(self):
+        """The upvote CLI command reports invalid IDs cleanly."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    exit_code = cli_main(["upvote", "missing"])
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Error: Shared prompt not found", output.getvalue())
+
     def test_cli_score_adds_prompt_history(self):
         """The score CLI command stores scored prompts in history."""
         original_cwd = os.getcwd()
@@ -1313,6 +1401,7 @@ class TestPrompt(unittest.TestCase):
 
         self.assertIn("Shared Prompt", result)
         self.assertIn("You are a coach.", result)
+        self.assertIn("Upvotes: 0", result)
         self.assertIn("Prompt Score", result)
         self.assertIn("Strengths", result)
 
@@ -1331,6 +1420,8 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Explore Prompts", result)
         self.assertIn("You are a coach.", result)
         self.assertIn(f"/share/{share_id}", result)
+        self.assertIn("Upvotes: 0", result)
+        self.assertIn("👍 Upvote", result)
         self.assertIn("Copy", result)
 
     def test_web_render_explore_page_empty_state(self):

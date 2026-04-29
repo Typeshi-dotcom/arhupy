@@ -20,7 +20,7 @@ from .library import export_all, import_all, list_all, save
 from .plugins import get_plugin
 from .prompt import Prompt
 from .scorer import score_prompt
-from .share import save_shared
+from .share import save_shared, upvote_prompt
 from .templates import fill_template, get_template, list_templates
 from .web import run_server
 
@@ -83,6 +83,9 @@ def main(argv=None):
 
     share_parser = subparsers.add_parser("share", help="Create a local share link for a prompt")
     share_parser.add_argument("prompt", nargs="*", help="Prompt text to share")
+
+    upvote_parser = subparsers.add_parser("upvote", help="Upvote a shared prompt")
+    upvote_parser.add_argument("id", help="Shared prompt ID")
 
     subparsers.add_parser("chain", help="Build a prompt chain")
     subparsers.add_parser("list", help="List saved prompts")
@@ -221,6 +224,14 @@ def main(argv=None):
             return 1
         share_id = save_shared(prompt_text)
         print(f"Share link: http://localhost:8000/share/{share_id}")
+        return 0
+    if args.command == "upvote":
+        try:
+            upvotes = upvote_prompt(args.id)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        print(f"Upvoted {args.id}: {upvotes} upvote(s)")
         return 0
     if args.command == "list":
         list_all()

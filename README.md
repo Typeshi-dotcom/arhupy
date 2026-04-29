@@ -44,6 +44,7 @@ print(prompt.fill(role="teacher", language="English"))
 - Score prompts with smarter local heuristics and detailed feedback
 - Compare prompts and see scoring differences from the CLI
 - Improve prompts with Claude through a simple command
+- Start faster with built-in prompt templates
 - Launch a local web dashboard for scoring and comparison
 - Track prompt template versions with notes
 - No external dependencies
@@ -89,6 +90,13 @@ Start the local web dashboard:
 
 ```bash
 arhupy web
+```
+
+List and view built-in templates:
+
+```bash
+arhupy templates
+arhupy template coding
 ```
 
 ## Examples
@@ -176,6 +184,27 @@ Improvements:
 
 ```bash
 arhupy diff "You are a fitness coach" "You are a helpful assistant"
+```
+
+## Prompt Templates
+
+Use built-in templates for common prompt patterns:
+
+```bash
+arhupy templates
+arhupy template fitness
+```
+
+In Python:
+
+```python
+from arhupy import Prompt, get_template, list_templates
+
+print(list_templates())
+
+template = get_template("coding")
+prompt = Prompt(template)
+print(prompt.fill(concept="recursion"))
 ```
 
 ## Web Dashboard

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - Prompt Templates
+
+### Added
+
+- Added built-in prompt templates
+
 ## [1.1.0] - Smart Scoring
 
 ### Added

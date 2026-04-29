@@ -7,6 +7,7 @@ from .improver import improve_prompt
 from .library import export_all, import_all, list_all, save
 from .prompt import Prompt
 from .scorer import score_prompt
+from .templates import get_template, list_templates
 from .web import run_server
 
 
@@ -35,7 +36,11 @@ def main(argv=None):
     import_parser = subparsers.add_parser("import", help="Import saved prompts")
     import_parser.add_argument("filepath", help="Input JSON file")
 
+    template_parser = subparsers.add_parser("template", help="Show a built-in template")
+    template_parser.add_argument("name", help="Template name")
+
     subparsers.add_parser("list", help="List saved prompts")
+    subparsers.add_parser("templates", help="List built-in templates")
     subparsers.add_parser("web", help="Start the local web dashboard")
 
     args = parser.parse_args(argv)
@@ -75,8 +80,20 @@ def main(argv=None):
         result = import_all(args.filepath)
         _print_import_result(result)
         return 0
+    if args.command == "template":
+        try:
+            print(get_template(args.name))
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        return 0
     if args.command == "list":
         list_all()
+        return 0
+    if args.command == "templates":
+        print("Available templates:")
+        for name in list_templates():
+            print(f"- {name}")
         return 0
     if args.command == "web":
         run_server()

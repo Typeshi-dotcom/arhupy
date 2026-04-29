@@ -8,10 +8,11 @@ from .improver import improve_prompt
 from .library import delete, export_all, import_all, list_all, load, save
 from .prompt import Prompt
 from .scorer import score_prompt
+from .templates import get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history, print_history, save_version
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 __all__ = [
     "Prompt",
@@ -34,4 +35,6 @@ __all__ = [
     "score_prompt",
     "compare_prompts",
     "improve_prompt",
+    "list_templates",
+    "get_template",
 ]

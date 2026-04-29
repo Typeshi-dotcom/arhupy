@@ -17,11 +17,13 @@ from arhupy import (
     export_all,
     export_chain,
     export_prompt,
+    get_template,
     improve_prompt,
     import_all,
     import_chain,
     import_prompt,
     list_all,
+    list_templates,
     load,
     save,
     score_prompt,
@@ -326,6 +328,45 @@ class TestPrompt(unittest.TestCase):
         self.assertEqual(result["overall_score"], 0)
         self.assertIn("Add prompt text before scoring.", result["feedback"])
         self.assertIn("Ready for improvement", result["strengths"])
+
+    def test_template_exists(self):
+        """Built-in templates can be listed and loaded by name."""
+        templates = list_templates()
+        template = get_template("coding")
+
+        self.assertIn("coding", templates)
+        self.assertEqual(
+            template,
+            "You are a senior developer. Explain {concept} in simple terms.",
+        )
+
+    def test_invalid_template_name_raises_clear_error(self):
+        """Loading an unknown template raises a clear exception."""
+        with self.assertRaises(Exception) as context:
+            get_template("unknown")
+
+        self.assertIn("Template not found", str(context.exception))
+
+    def test_cli_templates_commands_print_templates(self):
+        """The templates CLI commands list and print built-in templates."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as list_output:
+            list_exit_code = cli_main(["templates"])
+        with mock.patch("sys.stdout", new_callable=StringIO) as template_output:
+            template_exit_code = cli_main(["template", "coding"])
+
+        self.assertEqual(list_exit_code, 0)
+        self.assertEqual(template_exit_code, 0)
+        self.assertIn("Available templates:", list_output.getvalue())
+        self.assertIn("- coding", list_output.getvalue())
+        self.assertIn("You are a senior developer", template_output.getvalue())
+
+    def test_cli_template_handles_invalid_name(self):
+        """The template CLI command reports invalid names cleanly."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["template", "unknown"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Error: Template not found", output.getvalue())
 
     def test_cli_score_prints_clean_output(self):
         """The score CLI command prints readable scoring output."""

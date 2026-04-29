@@ -308,6 +308,17 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Clear task defined", result["strengths"])
         self.assertIn("Good structure", result["strengths"])
 
+    def test_score_prompt_strong_natural_prompt_gets_high_score(self):
+        """score_prompt rewards clear natural-language prompts."""
+        result = score_prompt(
+            "You are a fitness coach. Explain progressive overload step by step."
+        )
+
+        self.assertGreaterEqual(result["overall_score"], 8)
+        self.assertIn("Good prompt length", result["strengths"])
+        self.assertIn("Role is defined", result["strengths"])
+        self.assertIn("Clear task defined", result["strengths"])
+
     def test_score_prompt_empty_prompt_is_handled(self):
         """score_prompt handles empty prompts without crashing."""
         result = score_prompt("")

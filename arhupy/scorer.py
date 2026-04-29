@@ -62,18 +62,23 @@ def _score_clarity(analysis):
 
 
 def _score_structure(analysis):
-    """Score prompt structure by checking for reusable placeholders."""
+    """Score prompt structure by checking reusable and formatting signals."""
     if not analysis["text"]:
         return 0
 
     placeholder_count = len(analysis["placeholders"])
+    score = 5
     if placeholder_count >= 3:
-        return 10
-    if placeholder_count == 2:
-        return 8
-    if placeholder_count == 1:
-        return 6
-    return 3
+        score += 3
+    elif placeholder_count == 2:
+        score += 2
+    elif placeholder_count == 1:
+        score += 1
+    if analysis["has_output_instruction"]:
+        score += 1
+    if analysis["has_constraints"]:
+        score += 1
+    return min(score, 10)
 
 
 def _analyze_prompt(text):

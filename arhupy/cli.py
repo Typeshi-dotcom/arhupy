@@ -19,6 +19,7 @@ from .library import export_all, import_all, list_all, save
 from .plugins import get_plugin
 from .prompt import Prompt
 from .scorer import score_prompt
+from .share import save_shared
 from .templates import fill_template, get_template, list_templates
 from .web import run_server
 
@@ -74,6 +75,9 @@ def main(argv=None):
     plugin_parser = subparsers.add_parser("plugin", help="Run an arhupy plugin")
     plugin_parser.add_argument("name", help="Plugin name")
     plugin_parser.add_argument("args", nargs="*", help="Arguments to pass to the plugin")
+
+    share_parser = subparsers.add_parser("share", help="Create a local share link for a prompt")
+    share_parser.add_argument("prompt", nargs="*", help="Prompt text to share")
 
     subparsers.add_parser("chain", help="Build a prompt chain")
     subparsers.add_parser("list", help="List saved prompts")
@@ -194,6 +198,14 @@ def main(argv=None):
             return 1
         if result is not None:
             print(result)
+        return 0
+    if args.command == "share":
+        prompt_text = " ".join(args.prompt)
+        if not prompt_text:
+            print("Error: Prompt text is required.")
+            return 1
+        share_id = save_shared(prompt_text)
+        print(f"Share link: http://localhost:8000/share/{share_id}")
         return 0
     if args.command == "list":
         list_all()

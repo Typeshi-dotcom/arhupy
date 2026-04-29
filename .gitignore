@@ -9,6 +9,7 @@ build/
 arhupy_library.json
 arhupy_versions.json
 arhupy_history.json
+arhupy_shared.json
 .DS_Store
 venv/
 .venv/

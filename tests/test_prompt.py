@@ -25,6 +25,7 @@ from arhupy import (
     get_template,
     get_history,
     get_plugin,
+    get_shared,
     get_prompt_by_index,
     improve_prompt,
     import_all,
@@ -37,16 +38,19 @@ from arhupy import (
     load,
     run_interactive,
     save,
+    save_shared,
     save_version,
     score_prompt,
 )
 from arhupy.api import handle_api_request
 from arhupy.cli import main as cli_main
+from arhupy.share import generate_id
 from arhupy.web import (
     render_comparison,
     render_improvement,
     render_page,
     render_save_result,
+    render_shared_prompt,
     render_score,
 )
 
@@ -184,6 +188,42 @@ class TestPrompt(unittest.TestCase):
                 self.assertEqual(exported["new_prompt"], "You are a coach.")
             finally:
                 os.chdir(original_cwd)
+
+    def test_generate_id_returns_short_random_string(self):
+        """generate_id returns a simple short alphanumeric ID."""
+        share_id = generate_id()
+
+        self.assertGreaterEqual(len(share_id), 6)
+        self.assertLessEqual(len(share_id), 8)
+        self.assertTrue(share_id.isalnum())
+
+    def test_save_shared_and_get_shared_round_trip(self):
+        """Shared prompts can be saved and retrieved by ID."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                share_id = save_shared("You are a coach.")
+                prompt = get_shared(share_id)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(prompt, "You are a coach.")
+
+    def test_get_shared_invalid_id_raises_clear_error(self):
+        """get_shared reports invalid share IDs cleanly."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                with self.assertRaises(Exception) as context:
+                    get_shared("missing")
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Shared prompt not found", str(context.exception))
 
     def test_list_all_prints_count_and_prompt_names(self):
         """list_all prints a count and formatted prompt names."""
@@ -886,6 +926,22 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Exported history to", export_output.getvalue())
         self.assertIn("Skipped duplicates: 1", import_output.getvalue())
 
+    def test_interactive_share_prompt_and_exit(self):
+        """Interactive mode can create a share link."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                inputs = iter(["You are a coach", "11", "5"])
+
+                with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+                    with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                        run_interactive()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Share link: http://localhost:8000/share/", output.getvalue())
+
     def test_cli_interactive_calls_run_interactive(self):
         """The interactive CLI command starts interactive mode."""
         with mock.patch("arhupy.cli.run_interactive") as interactive:
@@ -936,6 +992,21 @@ class TestPrompt(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
         self.assertIn("Error: Plugin not found", output.getvalue())
+
+    def test_cli_share_prints_share_link(self):
+        """The share CLI command saves a prompt and prints a local link."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    exit_code = cli_main(["share", "You are a coach"])
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Share link: http://localhost:8000/share/", output.getvalue())
 
     def test_cli_score_adds_prompt_history(self):
         """The score CLI command stores scored prompts in history."""
@@ -1108,6 +1179,37 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Improved Prompt", result)
         self.assertIn("Original:", result)
         self.assertIn("Improved prompt", result)
+
+    def test_web_render_shared_prompt_page(self):
+        """The web dashboard can render shared prompts with scores."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                share_id = save_shared("You are a coach.")
+                result = render_shared_prompt(share_id)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Shared Prompt", result)
+        self.assertIn("You are a coach.", result)
+        self.assertIn("Prompt Score", result)
+        self.assertIn("Strengths", result)
+
+    def test_web_render_shared_prompt_invalid_id(self):
+        """The web dashboard renders a clean message for missing share IDs."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                result = render_shared_prompt("missing")
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Shared Prompt Not Found", result)
+        self.assertIn("Shared prompt not found", result)
 
     def test_web_can_save_prompt_and_show_saved_prompts(self):
         """The web dashboard can save Prompt 1 and show saved prompts."""

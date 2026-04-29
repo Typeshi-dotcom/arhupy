@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.2.0] - Shareable Links
+
+### Added
+
+- Ability to share prompts via local links
+
 ## [2.1.0] - UI Upgrade
 
 ### Added

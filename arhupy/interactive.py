@@ -7,6 +7,7 @@ from .improver import improve_prompt
 from .library import save
 from .prompt import Prompt
 from .scorer import score_prompt
+from .share import save_shared
 from .templates import fill_template
 
 
@@ -40,8 +41,10 @@ def run_interactive():
             _handle_export_history()
         elif choice == "10":
             _handle_import_history()
+        elif choice == "11":
+            _handle_share(prompt_text)
         else:
-            print("Invalid option. Please choose 1, 2, 3, 4, 5, 6, 7, 8, 9, or 10.")
+            print("Invalid option. Please choose a number from 1 to 11.")
 
 
 def _print_menu():
@@ -57,6 +60,7 @@ def _print_menu():
     print("8. Compare history prompts")
     print("9. Export history")
     print("10. Import history")
+    print("11. Share prompt")
 
 
 def _handle_score(prompt_text):
@@ -197,6 +201,16 @@ def _handle_import_history():
         return
     print(f"Imported history entries: {len(result['imported'])}")
     print(f"Skipped duplicates: {result['skipped']}")
+
+
+def _handle_share(prompt_text):
+    """Create and print a local share link for the current prompt."""
+    if not prompt_text:
+        print("Prompt text is required.")
+        return
+
+    share_id = save_shared(prompt_text)
+    print(f"Share link: http://localhost:8000/share/{share_id}")
 
 
 def _format_words(words):

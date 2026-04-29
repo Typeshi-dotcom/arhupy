@@ -2,13 +2,14 @@
 
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, unquote
 
 from .diff import compare_prompts
 from .improver import improve_prompt
 from .library import _read_library, save
 from .prompt import Prompt
 from .scorer import score_prompt
+from .share import get_shared
 
 
 def run_server(host="localhost", port=8000):
@@ -28,6 +29,11 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         """Serve the dashboard HTML page."""
+        if self.path.startswith("/share/"):
+            share_id = unquote(self.path.removeprefix("/share/")).strip()
+            self._send_html(render_shared_prompt(share_id))
+            return
+
         self._send_html(render_page())
 
     def do_POST(self):
@@ -323,6 +329,85 @@ def render_improvement(prompt, api_key):
 <p>{escape(prompt)}</p>
 <p><strong>Improved:</strong></p>
 <p>{escape(improved)}</p>"""
+
+
+def render_shared_prompt(share_id):
+    """Render a shared prompt page."""
+    try:
+        prompt = get_shared(share_id)
+    except Exception as exc:
+        return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Shared Prompt Not Found</title>
+</head>
+<body>
+  <main>
+    <h1>Shared Prompt Not Found</h1>
+    <p>{escape(str(exc))}</p>
+    <p><a href="/">Back to dashboard</a></p>
+  </main>
+</body>
+</html>"""
+
+    score_html = render_score(prompt)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Shared Prompt</title>
+  <style>
+    body {{
+      margin: 0;
+      background: #f5f7fb;
+      color: #18212f;
+      font-family: Arial, sans-serif;
+      line-height: 1.5;
+    }}
+    main {{
+      width: min(860px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0;
+    }}
+    .card {{
+      background: #ffffff;
+      border: 1px solid #d5dbea;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(26, 39, 68, 0.06);
+    }}
+    .prompt {{
+      white-space: pre-wrap;
+      background: #fbfcff;
+      border: 1px solid #e1e6f0;
+      border-radius: 8px;
+      padding: 16px;
+    }}
+    .metric {{
+      display: inline-block;
+      margin: 0 8px 8px 0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: #eef6ff;
+      font-weight: 700;
+    }}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>Shared Prompt</h1>
+      <p class="prompt">{escape(prompt)}</p>
+    </section>
+    <section class="card">
+      {score_html}
+    </section>
+    <p><a href="/">Back to dashboard</a></p>
+  </main>
+</body>
+</html>"""
 
 
 def render_save_result(name, prompt):

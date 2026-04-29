@@ -31,6 +31,7 @@ Prompt engineering can get messy fast. `arhupy` keeps the useful parts small and
 | Track sessions | Local prompt history with reuse |
 | Improve with AI | Claude-powered prompt improvement |
 | Run locally | CLI, web dashboard, and HTTP API |
+| Share prompts | Local share links with scored prompt pages |
 | Extend behavior | Simple plugin system |
 
 ## Installation
@@ -87,6 +88,7 @@ You are a fitness coach. Explain progressive overload in simple terms.
 | Prompt storage | `save()`, `load()` | `arhupy save`, `arhupy list` |
 | Sharing | `export_prompt()`, `import_prompt()` | `arhupy export`, `arhupy import` |
 | History | `add_history()`, `get_history()` | `arhupy history`, `arhupy reuse` |
+| Sharing | `save_shared()`, `get_shared()` | `arhupy share "..."` |
 | Claude integration | `ClaudeClient`, `improve_prompt()` | `arhupy improve` |
 | Web dashboard | `run_server()` | `arhupy web` |
 | Local API | `run_api_server()` | `arhupy api` |
@@ -253,6 +255,7 @@ Interactive mode lets you choose actions from a menu:
 8. Compare history prompts
 9. Export history
 10. Import history
+11. Share prompt
 ```
 
 ### Start the web dashboard
@@ -337,6 +340,20 @@ Output:
 ```text
 Echo: hello
 ```
+
+### Share a prompt locally
+
+```bash
+arhupy share "You are a coach. Explain progressive overload step by step."
+```
+
+Output:
+
+```text
+Share link: http://localhost:8000/share/abc123
+```
+
+Start the dashboard with `arhupy web`, open the share link, and `arhupy` shows the prompt with its score, strengths, and improvements.
 
 ## Python API Examples
 
@@ -545,6 +562,16 @@ class EchoPlugin(ArhupyPlugin):
         return f"Echo: {text}"
 ```
 
+### Sharing prompts
+
+```python
+from arhupy import get_shared, save_shared
+
+share_id = save_shared("You are a coach. Explain warmups step by step.")
+print(f"http://localhost:8000/share/{share_id}")
+print(get_shared(share_id))
+```
+
 ## Local Files Created By arhupy
 
 `arhupy` keeps local project data in your current working directory:
@@ -554,6 +581,7 @@ class EchoPlugin(ArhupyPlugin):
 | `arhupy_library.json` | Saved prompt templates |
 | `arhupy_versions.json` | Versioned prompt snapshots |
 | `arhupy_history.json` | Prompt history |
+| `arhupy_shared.json` | Local share-link prompts |
 
 These files are ignored by the included `.gitignore` so private prompt data does not get committed by accident.
 

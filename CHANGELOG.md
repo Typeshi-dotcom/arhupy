@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.0] - Session Export
+
+### Added
+
+- Export/import for prompt history
+
 ## [1.7.0] - History Comparison
 
 ### Added

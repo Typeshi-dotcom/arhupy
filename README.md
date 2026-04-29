@@ -134,6 +134,13 @@ Compare prompts from history:
 arhupy compare-history 1 2
 ```
 
+Export or import prompt history:
+
+```bash
+arhupy export-history history.json
+arhupy import-history history.json
+```
+
 ## Examples
 
 ### Prompt
@@ -300,6 +307,27 @@ from arhupy import add_history, compare_history
 add_history("You are a coach.")
 add_history("You are a fitness coach. Explain warmups step by step.")
 print(compare_history(1, 2))
+```
+
+## Session Export
+
+Export and import prompt history as JSON so you can move a session between folders or machines:
+
+```bash
+arhupy export-history history.json
+arhupy import-history history.json
+```
+
+Imported history entries are merged safely. Existing entries with the same prompt text and timestamp are skipped.
+
+In Python:
+
+```python
+from arhupy import export_history, import_history
+
+export_history("history.json")
+result = import_history("history.json")
+print(result)
 ```
 
 ## Prompt History

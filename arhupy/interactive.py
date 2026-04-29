@@ -2,7 +2,7 @@
 
 from .chain import build_chain
 from .diff import compare_prompts
-from .history import compare_history
+from .history import compare_history, export_history, import_history
 from .improver import improve_prompt
 from .library import save
 from .prompt import Prompt
@@ -36,8 +36,12 @@ def run_interactive():
             _handle_build_chain()
         elif choice == "8":
             _handle_compare_history()
+        elif choice == "9":
+            _handle_export_history()
+        elif choice == "10":
+            _handle_import_history()
         else:
-            print("Invalid option. Please choose 1, 2, 3, 4, 5, 6, 7, or 8.")
+            print("Invalid option. Please choose 1, 2, 3, 4, 5, 6, 7, 8, 9, or 10.")
 
 
 def _print_menu():
@@ -51,6 +55,8 @@ def _print_menu():
     print("6. Fill template")
     print("7. Build prompt chain")
     print("8. Compare history prompts")
+    print("9. Export history")
+    print("10. Import history")
 
 
 def _handle_score(prompt_text):
@@ -168,6 +174,29 @@ def _print_history_comparison(result):
         print("Better prompt: Prompt 2")
     else:
         print("Better prompt: Tie")
+
+
+def _handle_export_history():
+    """Export prompt history to a JSON file."""
+    filepath = input("Enter export file path: ").strip()
+    try:
+        export_history(filepath)
+    except Exception as exc:
+        print(f"Error: {exc}")
+        return
+    print(f"Exported history to {filepath}")
+
+
+def _handle_import_history():
+    """Import prompt history from a JSON file."""
+    filepath = input("Enter import file path: ").strip()
+    try:
+        result = import_history(filepath)
+    except Exception as exc:
+        print(f"Error: {exc}")
+        return
+    print(f"Imported history entries: {len(result['imported'])}")
+    print(f"Skipped duplicates: {result['skipped']}")
 
 
 def _format_words(words):

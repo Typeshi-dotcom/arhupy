@@ -4,7 +4,14 @@ from .chain import PromptChain, build_chain
 from .claude import ClaudeClient
 from .diff import compare_prompts
 from .exporter import export_chain, export_prompt, import_chain, import_prompt
-from .history import add_history, compare_history, get_history as get_prompt_history, get_prompt_by_index
+from .history import (
+    add_history,
+    compare_history,
+    export_history,
+    get_history as get_prompt_history,
+    get_prompt_by_index,
+    import_history,
+)
 from .improver import improve_prompt
 from .interactive import run_interactive
 from .library import delete, export_all, import_all, list_all, load, save
@@ -14,7 +21,7 @@ from .templates import fill_template, get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history as get_version_history, print_history, save_version
 
-__version__ = "1.7.0"
+__version__ = "1.8.0"
 
 
 def get_history(*args, **kwargs):
@@ -51,6 +58,8 @@ __all__ = [
     "fill_template",
     "add_history",
     "compare_history",
+    "export_history",
+    "import_history",
     "get_prompt_by_index",
     "get_version_history",
     "run_interactive",

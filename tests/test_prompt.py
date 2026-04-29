@@ -19,6 +19,7 @@ from arhupy import (
     estimate_tokens,
     export_all,
     export_chain,
+    export_history,
     export_prompt,
     fill_template,
     get_template,
@@ -27,6 +28,7 @@ from arhupy import (
     improve_prompt,
     import_all,
     import_chain,
+    import_history,
     import_prompt,
     list_all,
     list_templates,
@@ -572,6 +574,68 @@ class TestPrompt(unittest.TestCase):
         self.assertEqual(result["comparison"]["length_diff"], 0)
         self.assertEqual(result["comparison"]["word_diff"], 0)
 
+    def test_export_history_file(self):
+        """export_history writes full history to a JSON file."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                filepath = os.path.join(temp_dir, "history_export.json")
+
+                add_history("Export me")
+                export_history(filepath)
+                with open(filepath, "r", encoding="utf-8") as file:
+                    data = json.load(file)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(data[0]["prompt"], "Export me")
+        self.assertIn("timestamp", data[0])
+
+    def test_import_history(self):
+        """import_history loads entries into local history."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                filepath = os.path.join(temp_dir, "history_import.json")
+                with open(filepath, "w", encoding="utf-8") as file:
+                    json.dump([
+                        {"prompt": "Imported prompt", "timestamp": "2026-01-01T00:00:00+00:00"}
+                    ], file)
+
+                result = import_history(filepath)
+                history = get_history()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(len(result["imported"]), 1)
+        self.assertEqual(history[0]["prompt"], "Imported prompt")
+
+    def test_import_history_skips_duplicates(self):
+        """import_history does not duplicate existing entries."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                filepath = os.path.join(temp_dir, "history_import.json")
+                data = [
+                    {"prompt": "Imported prompt", "timestamp": "2026-01-01T00:00:00+00:00"}
+                ]
+                with open(filepath, "w", encoding="utf-8") as file:
+                    json.dump(data, file)
+
+                first = import_history(filepath)
+                second = import_history(filepath)
+                history = get_history()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(len(first["imported"]), 1)
+        self.assertEqual(len(second["imported"]), 0)
+        self.assertEqual(second["skipped"], 1)
+        self.assertEqual(len(history), 1)
+
     def test_get_history_keeps_version_history_compatibility(self):
         """get_history still supports version history lookups by prompt name."""
         original_cwd = os.getcwd()
@@ -648,6 +712,27 @@ class TestPrompt(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
         self.assertIn("Error: No prompt found", output.getvalue())
+
+    def test_cli_export_and_import_history(self):
+        """CLI export-history and import-history share prompt history."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                filepath = os.path.join(temp_dir, "history.json")
+                add_history("CLI export prompt")
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    export_exit_code = cli_main(["export-history", filepath])
+                    import_exit_code = cli_main(["import-history", filepath])
+            finally:
+                os.chdir(original_cwd)
+
+        contents = output.getvalue()
+        self.assertEqual(export_exit_code, 0)
+        self.assertEqual(import_exit_code, 0)
+        self.assertIn("Exported history to", contents)
+        self.assertIn("Skipped duplicates: 1", contents)
 
     def test_cli_reuse_handles_invalid_index(self):
         """The reuse CLI command reports invalid indexes cleanly."""
@@ -727,6 +812,30 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Prompt 1:", contents)
         self.assertIn("Score comparison:", contents)
         self.assertIn("Better prompt:", contents)
+
+    def test_interactive_export_and_import_history(self):
+        """Interactive mode can export and import prompt history."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                filepath = os.path.join(temp_dir, "history.json")
+                add_history("Interactive export prompt")
+
+                export_inputs = iter(["Starter prompt", "9", filepath, "5"])
+                with mock.patch("builtins.input", side_effect=lambda _: next(export_inputs)):
+                    with mock.patch("sys.stdout", new_callable=StringIO) as export_output:
+                        run_interactive()
+
+                import_inputs = iter(["Starter prompt", "10", filepath, "5"])
+                with mock.patch("builtins.input", side_effect=lambda _: next(import_inputs)):
+                    with mock.patch("sys.stdout", new_callable=StringIO) as import_output:
+                        run_interactive()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("Exported history to", export_output.getvalue())
+        self.assertIn("Skipped duplicates: 1", import_output.getvalue())
 
     def test_cli_interactive_calls_run_interactive(self):
         """The interactive CLI command starts interactive mode."""

@@ -4,7 +4,14 @@ import argparse
 
 from .chain import build_chain
 from .diff import compare_prompts
-from .history import add_history, compare_history, get_history as get_prompt_history, get_prompt_by_index
+from .history import (
+    add_history,
+    compare_history,
+    export_history,
+    get_history as get_prompt_history,
+    get_prompt_by_index,
+    import_history,
+)
 from .improver import improve_prompt
 from .interactive import run_interactive
 from .library import export_all, import_all, list_all, save
@@ -49,6 +56,12 @@ def main(argv=None):
     compare_history_parser = subparsers.add_parser("compare-history", help="Compare prompts from history")
     compare_history_parser.add_argument("index1", type=int, help="First history index")
     compare_history_parser.add_argument("index2", type=int, help="Second history index")
+
+    export_history_parser = subparsers.add_parser("export-history", help="Export prompt history")
+    export_history_parser.add_argument("filepath", help="Output JSON file")
+
+    import_history_parser = subparsers.add_parser("import-history", help="Import prompt history")
+    import_history_parser.add_argument("filepath", help="Input JSON file")
 
     template_parser = subparsers.add_parser("template", help="Show a built-in template")
     template_parser.add_argument("name", help="Template name")
@@ -125,6 +138,23 @@ def main(argv=None):
             print(f"Error: {exc}")
             return 1
         _print_history_comparison(result)
+        return 0
+    if args.command == "export-history":
+        try:
+            export_history(args.filepath)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        print(f"Exported history to {args.filepath}")
+        return 0
+    if args.command == "import-history":
+        try:
+            result = import_history(args.filepath)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        print(f"Imported history entries: {len(result['imported'])}")
+        print(f"Skipped duplicates: {result['skipped']}")
         return 0
     if args.command == "template":
         try:

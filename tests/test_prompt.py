@@ -274,7 +274,7 @@ class TestPrompt(unittest.TestCase):
 
     def test_score_prompt_returns_scores_and_feedback(self):
         """score_prompt returns numeric scores and feedback suggestions."""
-        result = score_prompt("You are a {role}. Answer this: {question}")
+        result = score_prompt("You are a {role}. Explain this: {question}")
 
         self.assertEqual(set(result), {
             "length_score",
@@ -282,11 +282,39 @@ class TestPrompt(unittest.TestCase):
             "structure_score",
             "overall_score",
             "feedback",
+            "strengths",
         })
         self.assertIsInstance(result["overall_score"], int)
         self.assertGreaterEqual(result["overall_score"], 0)
         self.assertLessEqual(result["overall_score"], 10)
         self.assertIsInstance(result["feedback"], list)
+        self.assertIsInstance(result["strengths"], list)
+
+    def test_score_prompt_short_prompt_gets_low_score(self):
+        """score_prompt gives short prompts a low score and useful feedback."""
+        result = score_prompt("hi")
+
+        self.assertLessEqual(result["overall_score"], 3)
+        self.assertIn("Add more detail", result["feedback"][0])
+
+    def test_score_prompt_strong_prompt_gets_high_score(self):
+        """score_prompt rewards prompts with role, task, structure, and constraints."""
+        result = score_prompt(
+            "You are a {role}. Explain {task} step by step in bullet points within 200 words only."
+        )
+
+        self.assertGreaterEqual(result["overall_score"], 9)
+        self.assertIn("Role is defined", result["strengths"])
+        self.assertIn("Clear task defined", result["strengths"])
+        self.assertIn("Good structure", result["strengths"])
+
+    def test_score_prompt_empty_prompt_is_handled(self):
+        """score_prompt handles empty prompts without crashing."""
+        result = score_prompt("")
+
+        self.assertEqual(result["overall_score"], 0)
+        self.assertIn("Add prompt text before scoring.", result["feedback"])
+        self.assertIn("Ready for improvement", result["strengths"])
 
     def test_cli_score_prints_clean_output(self):
         """The score CLI command prints readable scoring output."""
@@ -296,10 +324,8 @@ class TestPrompt(unittest.TestCase):
         contents = output.getvalue()
         self.assertEqual(exit_code, 0)
         self.assertIn("Score:", contents)
-        self.assertIn("Length:", contents)
-        self.assertIn("Clarity:", contents)
-        self.assertIn("Structure:", contents)
-        self.assertIn("Suggestions:", contents)
+        self.assertIn("Strengths:", contents)
+        self.assertIn("Improvements:", contents)
 
     def test_cli_score_handles_empty_prompt(self):
         """The score CLI command handles an empty prompt without crashing."""
@@ -309,7 +335,7 @@ class TestPrompt(unittest.TestCase):
         contents = output.getvalue()
         self.assertEqual(exit_code, 0)
         self.assertIn("Score:", contents)
-        self.assertIn("Suggestions:", contents)
+        self.assertIn("Improvements:", contents)
 
     def test_compare_prompts_returns_differences(self):
         """compare_prompts returns length, word, common, and unique differences."""

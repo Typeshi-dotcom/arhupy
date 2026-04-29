@@ -89,12 +89,14 @@ def main(argv=None):
 def _print_score(result):
     """Print prompt scoring results in a clean readable format."""
     print(f"Score: {result['overall_score']}/10")
-    print(f"Length: {result['length_score']}/10")
-    print(f"Clarity: {result['clarity_score']}/10")
-    print(f"Structure: {result['structure_score']}/10")
-    print("Suggestions:")
+    print()
+    print("Strengths:")
+    for strength in result["strengths"]:
+        print(f"- {strength}")
+    print()
+    print("Improvements:")
     for suggestion in result["feedback"]:
-        print(f"  - {suggestion}")
+        print(f"- {suggestion}")
 
 
 def _print_diff(result, score_1, score_2):

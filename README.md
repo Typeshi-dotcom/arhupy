@@ -41,7 +41,7 @@ print(prompt.fill(role="teacher", language="English"))
 - Save and load prompt templates from a local JSON library
 - Export and import prompts or prompt chains as shareable JSON files
 - Estimate token counts with a simple standard-library helper
-- Score prompts and get simple feedback from local heuristics
+- Score prompts with smarter local heuristics and detailed feedback
 - Compare prompts and see scoring differences from the CLI
 - Improve prompts with Claude through a simple command
 - Launch a local web dashboard for scoring and comparison
@@ -61,6 +61,8 @@ Score a prompt:
 ```bash
 arhupy score "You are a fitness coach"
 ```
+
+Scoring checks prompt length, role clarity, task clarity, placeholders, output format, and constraints.
 
 Compare two prompts:
 
@@ -146,6 +148,28 @@ print(tokens)
 
 ```bash
 arhupy score "You are a fitness coach"
+```
+
+## Smart Prompt Scoring
+
+`arhupy` scores prompts with readable local heuristics. It looks for a useful length, a clear role, a direct task, reusable placeholders, output instructions, and constraints.
+
+```bash
+arhupy score "You are a {role}. Explain {task} step by step in bullet points within 200 words only."
+```
+
+Example output:
+
+```text
+Score: 9/10
+
+Strengths:
+- Good prompt length
+- Role is defined
+- Clear task defined
+
+Improvements:
+- Prompt looks strong and ready to use.
 ```
 
 ## Prompt Comparison

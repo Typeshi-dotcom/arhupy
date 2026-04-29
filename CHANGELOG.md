@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.0] - Smart Scoring
+
+### Added
+
+- Strengths and detailed prompt feedback
+
+### Changed
+
+- Improved scoring logic for length, role, task clarity, structure, output format, and constraints
+
 ## [1.0.0] - Initial PyPI Release
 
 ### Changed

@@ -11,7 +11,7 @@ from .scorer import score_prompt
 from .tokens import estimate_tokens
 from .versioning import get_history, print_history, save_version
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 __all__ = [
     "Prompt",

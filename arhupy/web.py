@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote
 
 from .diff import compare_prompts
+from .generator import generate_prompt
 from .improver import improve_prompt
 from .library import _read_library, save
 from .prompt import Prompt
@@ -49,6 +50,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
         prompt_2 = form.get("prompt2", [""])[0]
         improve_prompt_text = form.get("improve_prompt", [""])[0]
         api_key = form.get("api_key", [""])[0]
+        generate_idea = form.get("generate_idea", [""])[0]
+        generate_api_key = form.get("generate_api_key", [""])[0]
         action = form.get("action", ["score"])[0]
         save_name = form.get("save_name", [""])[0].strip()
 
@@ -58,6 +61,9 @@ class DashboardHandler(BaseHTTPRequestHandler):
         elif action == "improve":
             result_html = render_improvement(improve_prompt_text, api_key)
             active_tab = "improve"
+        elif action == "generate":
+            result_html = render_generation(generate_idea, generate_api_key)
+            active_tab = "generate"
         elif action == "compare":
             result_html = render_comparison(prompt_1, prompt_2)
             active_tab = "compare"
@@ -75,6 +81,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 result_html=result_html,
                 active_tab=active_tab,
                 improve_text=improve_prompt_text,
+                generate_idea=generate_idea,
             )
         )
 
@@ -92,11 +99,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-def render_page(prompt_1="", prompt_2="", result_html="", active_tab="score", improve_text=""):
+def render_page(
+    prompt_1="",
+    prompt_2="",
+    result_html="",
+    active_tab="score",
+    improve_text="",
+    generate_idea="",
+):
     """Render the dashboard page."""
     score_checked = "checked" if active_tab == "score" else ""
     compare_checked = "checked" if active_tab == "compare" else ""
     improve_checked = "checked" if active_tab == "improve" else ""
+    generate_checked = "checked" if active_tab == "generate" else ""
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -122,7 +137,7 @@ def render_page(prompt_1="", prompt_2="", result_html="", active_tab="score", im
     .subtitle {{ margin: 0; color: #5b6678; }}
     .tabs {{
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       margin-bottom: 16px;
     }}
@@ -138,7 +153,8 @@ def render_page(prompt_1="", prompt_2="", result_html="", active_tab="score", im
     }}
     #tab-score:checked + .tab,
     #tab-compare:checked + .tab,
-    #tab-improve:checked + .tab {{
+    #tab-improve:checked + .tab,
+    #tab-generate:checked + .tab {{
       background: #ffffff;
       border-bottom-color: #ffffff;
       color: #0f5fa8;
@@ -155,7 +171,8 @@ def render_page(prompt_1="", prompt_2="", result_html="", active_tab="score", im
     }}
     #tab-score:checked ~ .score-panel,
     #tab-compare:checked ~ .compare-panel,
-    #tab-improve:checked ~ .improve-panel {{
+    #tab-improve:checked ~ .improve-panel,
+    #tab-generate:checked ~ .generate-panel {{
       display: block;
     }}
     form {{
@@ -218,6 +235,8 @@ def render_page(prompt_1="", prompt_2="", result_html="", active_tab="score", im
       <label class="tab" for="tab-compare">Compare</label>
       <input id="tab-improve" name="dashboard-tab" type="radio" {improve_checked}>
       <label class="tab" for="tab-improve">Improve</label>
+      <input id="tab-generate" name="dashboard-tab" type="radio" {generate_checked}>
+      <label class="tab" for="tab-generate">Generate</label>
 
       <div class="tab-panel score-panel">
         <form method="post">
@@ -247,6 +266,17 @@ def render_page(prompt_1="", prompt_2="", result_html="", active_tab="score", im
           <label for="api_key">Claude API Key</label>
           <input id="api_key" name="api_key" type="password" placeholder="YOUR_KEY">
           <button type="submit" name="action" value="improve">Improve Prompt</button>
+        </form>
+      </div>
+
+      <div class="tab-panel generate-panel">
+        <form method="post">
+          <h2>Generate</h2>
+          <label for="generate_idea">Prompt Idea</label>
+          <input id="generate_idea" name="generate_idea" type="text" value="{escape(generate_idea)}" placeholder="fitness coach">
+          <label for="generate_api_key">Claude API Key</label>
+          <input id="generate_api_key" name="generate_api_key" type="password" placeholder="YOUR_KEY">
+          <button type="submit" name="action" value="generate">Generate Prompt</button>
         </form>
       </div>
     </section>
@@ -333,6 +363,23 @@ def render_improvement(prompt, api_key):
 <p>{escape(prompt)}</p>
 <p><strong>Improved:</strong></p>
 <p>{escape(improved)}</p>"""
+
+
+def render_generation(idea, api_key):
+    """Render a generated prompt result."""
+    if not idea.strip():
+        return "<p>Please enter an idea to generate a prompt.</p>"
+    if not api_key:
+        return "<p>Please enter a Claude API key before generating a prompt.</p>"
+
+    try:
+        generated = generate_prompt(idea, api_key)
+    except Exception as exc:
+        return f"<p>Could not generate prompt: {escape(str(exc))}</p>"
+
+    return f"""<h3>Generated Prompt</h3>
+<p><strong>Idea:</strong> {escape(idea)}</p>
+<p>{escape(generated)}</p>"""
 
 
 def render_shared_prompt(share_id):

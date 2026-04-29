@@ -30,6 +30,7 @@ Prompt engineering can get messy fast. `arhupy` keeps the useful parts small and
 | Share prompts | JSON export and import helpers |
 | Track sessions | Local prompt history with reuse |
 | Improve with AI | Claude-powered prompt improvement |
+| Generate prompts | Turn short ideas into structured prompts |
 | Run locally | CLI, web dashboard, and HTTP API |
 | Share prompts | Local share links with scored prompt pages |
 | Extend behavior | Simple plugin system |
@@ -90,6 +91,7 @@ You are a fitness coach. Explain progressive overload in simple terms.
 | History | `add_history()`, `get_history()` | `arhupy history`, `arhupy reuse` |
 | Sharing | `save_shared()`, `get_shared()` | `arhupy share "..."` |
 | Claude integration | `ClaudeClient`, `improve_prompt()` | `arhupy improve` |
+| AI generation | `generate_prompt()` | `arhupy generate "..."` |
 | Web dashboard | `run_server()` | `arhupy web` |
 | Local API | `run_api_server()` | `arhupy api` |
 | Plugins | `ArhupyPlugin`, `get_plugin()` | `arhupy plugin echo "hello"` |
@@ -149,6 +151,14 @@ arhupy improve "You are a coach" --api-key YOUR_KEY
 ```
 
 `arhupy` uses the built-in `ClaudeClient` with `urllib`, so no external request library is needed. For safe local testing, the placeholder `YOUR_KEY` returns a demo improvement without making a real API call.
+
+### Generate a prompt from an idea
+
+```bash
+arhupy generate "fitness coach" --api-key YOUR_KEY
+```
+
+The generator expands a short idea into a full prompt with a role, task, structure, and constraints. With `YOUR_KEY`, it returns a realistic local demo prompt. With a real Claude API key, it asks Claude to generate the prompt.
 
 ### Save, list, export, and import prompts
 
@@ -256,6 +266,7 @@ Interactive mode lets you choose actions from a menu:
 9. Export history
 10. Import history
 11. Share prompt
+12. Generate prompt from idea
 ```
 
 ### Start the web dashboard
@@ -536,6 +547,15 @@ from arhupy import improve_prompt
 
 improved = improve_prompt("You are a coach", api_key="your-api-key")
 print(improved)
+```
+
+### AI prompt generator
+
+```python
+from arhupy import generate_prompt
+
+prompt = generate_prompt("fitness coach", api_key="YOUR_KEY")
+print(prompt)
 ```
 
 ### Plugin system

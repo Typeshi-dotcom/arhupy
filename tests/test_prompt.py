@@ -22,6 +22,7 @@ from arhupy import (
     export_history,
     export_prompt,
     fill_template,
+    generate_prompt,
     get_template,
     get_history,
     get_plugin,
@@ -47,6 +48,7 @@ from arhupy.cli import main as cli_main
 from arhupy.share import generate_id
 from arhupy.web import (
     render_comparison,
+    render_generation,
     render_improvement,
     render_page,
     render_save_result,
@@ -291,6 +293,39 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("You are a coach", result)
         self.assertIn("clear", result.lower())
         self.assertIn("structured", result.lower())
+
+    def test_generate_prompt_supports_placeholder_demo_key(self):
+        """generate_prompt returns a realistic demo prompt for placeholder keys."""
+        result = generate_prompt("fitness coach", "YOUR_KEY")
+
+        self.assertIn("professional fitness coach", result)
+        self.assertIn("Task:", result)
+        self.assertIn("Output format:", result)
+        self.assertIn("Constraints:", result)
+
+    def test_generate_prompt_requires_api_key_and_user_input(self):
+        """generate_prompt raises clear errors for missing required inputs."""
+        with self.assertRaises(Exception) as missing_key_context:
+            generate_prompt("fitness coach")
+        with self.assertRaises(Exception) as empty_input_context:
+            generate_prompt("", "YOUR_KEY")
+
+        self.assertIn("API key is required", str(missing_key_context.exception))
+        self.assertIn("User input is required", str(empty_input_context.exception))
+
+    def test_generate_prompt_uses_claude_client(self):
+        """generate_prompt sends generation requests through ClaudeClient."""
+        with mock.patch("arhupy.generator.ClaudeClient") as client_class:
+            client = client_class.return_value
+            client.ask.return_value = "Generated prompt"
+
+            result = generate_prompt("fitness coach", "test-key")
+
+        self.assertEqual(result, "Generated prompt")
+        client_class.assert_called_once_with(api_key="test-key")
+        request_text = client.ask.call_args.args[0]
+        self.assertIn("Create a clear, structured", request_text)
+        self.assertIn("fitness coach", request_text)
 
     def test_prompt_to_dict_and_from_dict(self):
         """Prompt objects can round-trip through dictionary data."""
@@ -942,6 +977,17 @@ class TestPrompt(unittest.TestCase):
 
         self.assertIn("Share link: http://localhost:8000/share/", output.getvalue())
 
+    def test_interactive_generate_prompt_and_exit(self):
+        """Interactive mode can generate a prompt from an idea."""
+        inputs = iter(["Starter prompt", "12", "fitness coach", "YOUR_KEY", "5"])
+        with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                run_interactive()
+
+        contents = output.getvalue()
+        self.assertIn("Generated prompt:", contents)
+        self.assertIn("professional fitness coach", contents)
+
     def test_cli_interactive_calls_run_interactive(self):
         """The interactive CLI command starts interactive mode."""
         with mock.patch("arhupy.cli.run_interactive") as interactive:
@@ -1122,6 +1168,26 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Error:", contents)
         self.assertIn("API key is required", contents)
 
+    def test_cli_generate_prints_generated_prompt(self):
+        """The generate CLI command prints generated prompt text."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["generate", "fitness coach", "--api-key", "YOUR_KEY"])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Generated prompt:", contents)
+        self.assertIn("professional fitness coach", contents)
+
+    def test_cli_generate_handles_missing_api_key_cleanly(self):
+        """The generate CLI command reports a clean error when the key is missing."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["generate", "fitness coach"])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Error:", contents)
+        self.assertIn("API key is required", contents)
+
     def test_cli_web_calls_run_server(self):
         """The web CLI command starts the local server."""
         with mock.patch("arhupy.cli.run_server") as run_server:
@@ -1165,6 +1231,7 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Score Prompt", page)
         self.assertIn("Compare Prompts", page)
         self.assertIn("Improve Prompt", page)
+        self.assertIn("Generate Prompt", page)
         self.assertIn("Prompt Score", score)
         self.assertIn("Strengths", score)
         self.assertIn("Improvements", score)
@@ -1179,6 +1246,15 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Improved Prompt", result)
         self.assertIn("Original:", result)
         self.assertIn("Improved prompt", result)
+
+    def test_web_render_generation_uses_generator(self):
+        """The web dashboard can render generated prompt output."""
+        with mock.patch("arhupy.web.generate_prompt", return_value="Generated prompt"):
+            result = render_generation("fitness coach", "test-key")
+
+        self.assertIn("Generated Prompt", result)
+        self.assertIn("fitness coach", result)
+        self.assertIn("Generated prompt", result)
 
     def test_web_render_shared_prompt_page(self):
         """The web dashboard can render shared prompts with scores."""

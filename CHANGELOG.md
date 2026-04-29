@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.0] - AI Prompt Generator
+
+### Added
+
+- Prompt generation from user ideas
+
 ## [2.3.0] - Deployment Ready
 
 ### Added

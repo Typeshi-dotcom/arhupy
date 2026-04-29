@@ -2,6 +2,7 @@
 
 from .chain import build_chain
 from .diff import compare_prompts
+from .generator import generate_prompt
 from .history import compare_history, export_history, import_history
 from .improver import improve_prompt
 from .library import save
@@ -43,8 +44,10 @@ def run_interactive():
             _handle_import_history()
         elif choice == "11":
             _handle_share(prompt_text)
+        elif choice == "12":
+            _handle_generate()
         else:
-            print("Invalid option. Please choose a number from 1 to 11.")
+            print("Invalid option. Please choose a number from 1 to 12.")
 
 
 def _print_menu():
@@ -61,6 +64,7 @@ def _print_menu():
     print("9. Export history")
     print("10. Import history")
     print("11. Share prompt")
+    print("12. Generate prompt from idea")
 
 
 def _handle_score(prompt_text):
@@ -211,6 +215,20 @@ def _handle_share(prompt_text):
 
     share_id = save_shared(prompt_text)
     print(f"Share link: http://localhost:8000/share/{share_id}")
+
+
+def _handle_generate():
+    """Generate and print a prompt from a user idea."""
+    idea = input("Enter prompt idea: ").strip()
+    api_key = input("Enter API key: ").strip()
+    try:
+        generated = generate_prompt(idea, api_key)
+    except Exception as exc:
+        print(f"Error: {exc}")
+        return
+
+    print("Generated prompt:")
+    print(generated)
 
 
 def _format_words(words):

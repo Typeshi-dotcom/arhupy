@@ -13,6 +13,7 @@ from .history import (
     get_prompt_by_index,
     import_history,
 )
+from .generator import generate_prompt
 from .improver import improve_prompt
 from .interactive import run_interactive
 from .library import export_all, import_all, list_all, save
@@ -38,6 +39,10 @@ def main(argv=None):
     improve_parser = subparsers.add_parser("improve", help="Improve a prompt with Claude")
     improve_parser.add_argument("prompt", nargs="*", help="Prompt text to improve")
     improve_parser.add_argument("--api-key", help="Claude API key")
+
+    generate_parser = subparsers.add_parser("generate", help="Generate a prompt from an idea")
+    generate_parser.add_argument("idea", nargs="*", help="Prompt idea to expand")
+    generate_parser.add_argument("--api-key", help="Claude API key")
 
     save_parser = subparsers.add_parser("save", help="Save a prompt to the library")
     save_parser.add_argument("name", help="Prompt name")
@@ -114,6 +119,16 @@ def main(argv=None):
         print(prompt_text)
         print("Improved:")
         print(improved)
+        return 0
+    if args.command == "generate":
+        idea = " ".join(args.idea)
+        try:
+            generated = generate_prompt(idea, args.api_key)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        print("Generated prompt:")
+        print(generated)
         return 0
     if args.command == "save":
         prompt_text = " ".join(args.prompt)

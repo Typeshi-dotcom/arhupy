@@ -5,6 +5,7 @@ from .chain import PromptChain, build_chain
 from .claude import ClaudeClient
 from .diff import compare_prompts
 from .exporter import export_chain, export_prompt, import_chain, import_prompt
+from .generator import generate_prompt
 from .history import (
     add_history,
     compare_history,
@@ -24,7 +25,7 @@ from .templates import fill_template, get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history as get_version_history, print_history, save_version
 
-__version__ = "2.3.0"
+__version__ = "2.4.0"
 
 
 def get_history(*args, **kwargs):
@@ -58,6 +59,7 @@ __all__ = [
     "export_chain",
     "import_chain",
     "score_prompt",
+    "generate_prompt",
     "save_shared",
     "get_shared",
     "compare_prompts",

@@ -6,6 +6,7 @@ from .diff import compare_prompts
 from .exporter import export_chain, export_prompt, import_chain, import_prompt
 from .history import add_history, get_history as get_prompt_history, get_prompt_by_index
 from .improver import improve_prompt
+from .interactive import run_interactive
 from .library import delete, export_all, import_all, list_all, load, save
 from .prompt import Prompt
 from .scorer import score_prompt
@@ -13,7 +14,7 @@ from .templates import get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history as get_version_history, print_history, save_version
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 
 def get_history(*args, **kwargs):
@@ -49,4 +50,5 @@ __all__ = [
     "add_history",
     "get_prompt_by_index",
     "get_version_history",
+    "run_interactive",
 ]

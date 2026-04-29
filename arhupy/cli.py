@@ -5,6 +5,7 @@ import argparse
 from .diff import compare_prompts
 from .history import add_history, get_history as get_prompt_history, get_prompt_by_index
 from .improver import improve_prompt
+from .interactive import run_interactive
 from .library import export_all, import_all, list_all, save
 from .prompt import Prompt
 from .scorer import score_prompt
@@ -49,6 +50,7 @@ def main(argv=None):
 
     subparsers.add_parser("list", help="List saved prompts")
     subparsers.add_parser("templates", help="List built-in templates")
+    subparsers.add_parser("interactive", help="Start interactive mode")
     subparsers.add_parser("web", help="Start the local web dashboard")
 
     args = parser.parse_args(argv)
@@ -121,6 +123,9 @@ def main(argv=None):
         print("Available templates:")
         for name in list_templates():
             print(f"- {name}")
+        return 0
+    if args.command == "interactive":
+        run_interactive()
         return 0
     if args.command == "web":
         run_server()

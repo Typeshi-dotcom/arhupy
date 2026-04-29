@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0] - Interactive Mode
+
+### Added
+
+- Interactive CLI session
+
 ## [1.3.0] - Prompt History
 
 ### Added

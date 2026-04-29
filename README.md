@@ -46,6 +46,7 @@ print(prompt.fill(role="teacher", language="English"))
 - Improve prompts with Claude through a simple command
 - Start faster with built-in prompt templates
 - Reuse recent prompts from local history
+- Work through prompt actions in interactive mode
 - Launch a local web dashboard for scoring and comparison
 - Track prompt template versions with notes
 - No external dependencies
@@ -107,6 +108,12 @@ arhupy history
 arhupy history 5
 arhupy reuse 2
 arhupy reuse 2 --score
+```
+
+Start interactive mode:
+
+```bash
+arhupy interactive
 ```
 
 ## Examples
@@ -238,6 +245,16 @@ add_history("You are a coach. Explain progressive overload.")
 print(get_history(limit=1))
 print(get_prompt_by_index(1))
 ```
+
+## Interactive Mode
+
+Run an interactive prompt workflow from the terminal:
+
+```bash
+arhupy interactive
+```
+
+Interactive mode lets you enter one prompt, then score it, improve it, compare it with another prompt, save it to the prompt library, or exit.
 
 ## Web Dashboard
 

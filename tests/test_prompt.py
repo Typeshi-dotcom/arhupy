@@ -28,6 +28,7 @@ from arhupy import (
     list_all,
     list_templates,
     load,
+    run_interactive,
     save,
     save_version,
     score_prompt,
@@ -490,6 +491,35 @@ class TestPrompt(unittest.TestCase):
 
         self.assertEqual(exit_code, 1)
         self.assertIn("Error: No prompt found", output.getvalue())
+
+    def test_interactive_score_and_exit(self):
+        """Interactive mode can score a prompt and exit."""
+        inputs = iter(["You are a coach", "1", "5"])
+        with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                run_interactive()
+
+        contents = output.getvalue()
+        self.assertIn("Welcome to arhupy interactive mode.", contents)
+        self.assertIn("Score:", contents)
+        self.assertIn("Goodbye.", contents)
+
+    def test_interactive_handles_invalid_option(self):
+        """Interactive mode reports invalid menu choices cleanly."""
+        inputs = iter(["You are a coach", "bad", "5"])
+        with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                run_interactive()
+
+        self.assertIn("Invalid option", output.getvalue())
+
+    def test_cli_interactive_calls_run_interactive(self):
+        """The interactive CLI command starts interactive mode."""
+        with mock.patch("arhupy.cli.run_interactive") as interactive:
+            exit_code = cli_main(["interactive"])
+
+        self.assertEqual(exit_code, 0)
+        interactive.assert_called_once_with()
 
     def test_cli_score_adds_prompt_history(self):
         """The score CLI command stores scored prompts in history."""

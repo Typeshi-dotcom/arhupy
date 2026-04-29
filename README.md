@@ -3,11 +3,35 @@
 [![PyPI version](https://img.shields.io/pypi/v/arhupy.svg)](https://pypi.org/project/arhupy/)
 [![Python versions](https://img.shields.io/pypi/pyversions/arhupy.svg)](https://pypi.org/project/arhupy/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](pyproject.toml)
 [![GitHub stars](https://img.shields.io/github/stars/Typeshi-dotcom/arhupy.svg?style=social)](https://github.com/Typeshi-dotcom/arhupy)
 
-A lightweight prompt engineering toolkit for LLMs
+A lightweight prompt engineering toolkit for LLMs like Claude, GPT, and Gemini.
 
-`arhupy` helps you create, fill, chain, save, version, and estimate prompts for LLMs like Claude, GPT, and Gemini. It is small by design and uses only the Python standard library.
+`arhupy` gives you a practical set of tools for writing, scoring, comparing, saving, exporting, improving, and reusing prompts. It works from both Python and the command line, uses only the Python standard library, and stores local data as simple JSON files in your current working directory.
+
+```text
+Write prompt -> Score it -> Compare versions -> Save or export -> Reuse later
+                         -> Improve with Claude
+                         -> Serve through CLI, web, or local API
+```
+
+## Why arhupy?
+
+Prompt engineering can get messy fast. `arhupy` keeps the useful parts small and organized:
+
+| Need | arhupy gives you |
+| --- | --- |
+| Fill reusable prompts | `Prompt("You are a {role}")` |
+| Chain prompt steps | `PromptChain` and `arhupy chain` |
+| Score prompt quality | `score_prompt()` and `arhupy score` |
+| Compare prompt versions | `compare_prompts()` and `arhupy diff` |
+| Save prompt libraries | Local `arhupy_library.json` storage |
+| Share prompts | JSON export and import helpers |
+| Track sessions | Local prompt history with reuse |
+| Improve with AI | Claude-powered prompt improvement |
+| Run locally | CLI, web dashboard, and HTTP API |
+| Extend behavior | Simple plugin system |
 
 ## Installation
 
@@ -25,136 +49,278 @@ cd arhupy
 pip install -e .
 ```
 
-## Quick Start
-
-```python
-from arhupy import Prompt
-
-prompt = Prompt("You are a {role}. Speak in {language}.")
-print(prompt.fill(role="teacher", language="English"))
-```
-
-## Features
-
-- Fill prompt templates with named placeholders
-- Chain multiple prompts into one final prompt
-- Save and load prompt templates from a local JSON library
-- Export and import prompts or prompt chains as shareable JSON files
-- Estimate token counts with a simple standard-library helper
-- Score prompts with smarter local heuristics and detailed feedback
-- Compare prompts and see scoring differences from the CLI
-- Improve prompts with Claude through a simple command
-- Start faster with built-in prompt templates
-- Reuse recent prompts from local history
-- Work through prompt actions in interactive mode
-- Launch a local web dashboard for scoring and comparison
-- Extend behavior with simple local plugins
-- Track prompt template versions with notes
-- No external dependencies
-
-## CLI Usage
-
-Show available commands:
+Check the CLI:
 
 ```bash
 arhupy --help
 ```
 
-Score a prompt:
+## Quick Start
 
-```bash
-arhupy score "You are a fitness coach"
+```python
+from arhupy import Prompt
+
+prompt = Prompt("You are a {role}. Explain {topic} in {style}.")
+filled = prompt.fill(
+    role="fitness coach",
+    topic="progressive overload",
+    style="simple terms",
+)
+
+print(filled)
 ```
 
-Scoring checks prompt length, role clarity, task clarity, placeholders, output format, and constraints.
+Output:
 
-Compare two prompts:
+```text
+You are a fitness coach. Explain progressive overload in simple terms.
+```
+
+## Feature Map
+
+| Feature | Python API | CLI command |
+| --- | --- | --- |
+| Prompt templates | `Prompt` | `arhupy fill coding` |
+| Prompt chains | `PromptChain`, `build_chain()` | `arhupy chain` |
+| Prompt scoring | `score_prompt()` | `arhupy score "..."` |
+| Prompt comparison | `compare_prompts()` | `arhupy diff "..." "..."` |
+| Prompt storage | `save()`, `load()` | `arhupy save`, `arhupy list` |
+| Sharing | `export_prompt()`, `import_prompt()` | `arhupy export`, `arhupy import` |
+| History | `add_history()`, `get_history()` | `arhupy history`, `arhupy reuse` |
+| Claude integration | `ClaudeClient`, `improve_prompt()` | `arhupy improve` |
+| Web dashboard | `run_server()` | `arhupy web` |
+| Local API | `run_api_server()` | `arhupy api` |
+| Plugins | `ArhupyPlugin`, `get_plugin()` | `arhupy plugin echo "hello"` |
+
+## CLI Command Reference
+
+### Score a prompt
+
+```bash
+arhupy score "You are a fitness coach. Explain progressive overload step by step."
+```
+
+What it checks:
+
+| Check | What it looks for |
+| --- | --- |
+| Length | Too short, ideal length, or too long |
+| Role | Phrases like `you are`, `act as`, or `role` |
+| Task clarity | Words like `write`, `explain`, `generate`, `analyze`, or `give` |
+| Structure | Placeholders like `{role}`, `{task}`, or `{question}` |
+| Output format | Instructions like `bullet points`, `step by step`, or `format` |
+| Constraints | Words like `limit`, `max`, `within`, or `only` |
+
+Example output:
+
+```text
+Score: 8/10
+
+Strengths:
+- Good prompt length
+- Role is defined
+- Clear task defined
+
+Improvements:
+- Use placeholders like {role}, {task}, or {question}.
+```
+
+### Compare two prompts
 
 ```bash
 arhupy diff "You are a coach" "You are a strict fitness coach"
 ```
 
-Improve a prompt:
+The comparison shows:
+
+- Length difference
+- Word count difference
+- Common words
+- Words unique to each prompt
+- Score for each prompt
+- Which prompt looks stronger
+
+### Improve a prompt with Claude
 
 ```bash
 arhupy improve "You are a coach" --api-key YOUR_KEY
 ```
 
-Save, list, export, and import prompts:
+`arhupy` uses the built-in `ClaudeClient` with `urllib`, so no external request library is needed. For safe local testing, the placeholder `YOUR_KEY` returns a demo improvement without making a real API call.
+
+### Save, list, export, and import prompts
 
 ```bash
-arhupy save my_prompt "You are a coach"
+arhupy save workout "You are a fitness coach. Create a {plan} for {goal}."
 arhupy list
 arhupy export prompts.json
 arhupy import prompts.json
 ```
 
-Start the local web dashboard:
+Saved prompts live in:
 
-```bash
-arhupy web
+```text
+arhupy_library.json
 ```
 
-List and view built-in templates:
+The file is created in your current working directory.
+
+### Use built-in templates
 
 ```bash
 arhupy templates
 arhupy template coding
-```
-
-Show and reuse recent prompts:
-
-```bash
-arhupy history
-arhupy history 5
-arhupy reuse 2
-arhupy reuse 2 --score
-```
-
-Start interactive mode:
-
-```bash
-arhupy interactive
-```
-
-Fill a built-in template:
-
-```bash
 arhupy fill coding
 ```
 
-Build a prompt chain:
+Built-in templates:
+
+| Name | Template |
+| --- | --- |
+| `fitness` | `You are a fitness coach. Create a {plan} for {goal}.` |
+| `coding` | `You are a senior developer. Explain {concept} in simple terms.` |
+| `writing` | `You are a writer. Write a {type} about {topic}.` |
+| `business` | `You are a business expert. Analyze {idea} and suggest improvements.` |
+
+### Build a prompt chain
 
 ```bash
 arhupy chain
 ```
 
-Compare prompts from history:
+Enter one prompt per line. Submit an empty line to finish.
+
+Example:
+
+```text
+Enter prompt 1: You are a coach.
+Enter prompt 2: Explain progressive overload.
+Enter prompt 3: Use bullet points.
+Enter prompt 4:
+```
+
+Output:
+
+```text
+You are a coach.
+Explain progressive overload.
+Use bullet points.
+```
+
+### Work with prompt history
+
+Commands that score, diff, or improve prompts automatically save them to history.
 
 ```bash
+arhupy history
+arhupy history 5
+arhupy reuse 1
+arhupy reuse 1 --score
 arhupy compare-history 1 2
 ```
 
-Export or import prompt history:
+History lives in:
+
+```text
+arhupy_history.json
+```
+
+### Export and import session history
 
 ```bash
 arhupy export-history history.json
 arhupy import-history history.json
 ```
 
-Start API mode:
+Imported history entries are merged safely. Duplicate entries are skipped.
+
+### Start interactive mode
+
+```bash
+arhupy interactive
+```
+
+Interactive mode lets you choose actions from a menu:
+
+```text
+1. Score prompt
+2. Improve prompt
+3. Compare with another prompt
+4. Save prompt
+5. Exit
+6. Fill template
+7. Build prompt chain
+8. Compare history prompts
+9. Export history
+10. Import history
+```
+
+### Start the web dashboard
+
+```bash
+arhupy web
+```
+
+Then open:
+
+```text
+http://localhost:8000
+```
+
+The dashboard includes:
+
+- Prompt scoring
+- Prompt comparison
+- Saved prompt display
+- Save prompt button
+
+### Start API mode
 
 ```bash
 arhupy api
 ```
 
-Run a plugin:
+Then call the local API at:
+
+```text
+http://localhost:8001
+```
+
+Endpoints:
+
+| Endpoint | Method | Body |
+| --- | --- | --- |
+| `/score` | `POST` | `{ "prompt": "You are a coach" }` |
+| `/diff` | `POST` | `{ "p1": "Prompt one", "p2": "Prompt two" }` |
+| `/improve` | `POST` | `{ "prompt": "You are a coach", "api_key": "YOUR_KEY" }` |
+
+Example with curl on macOS/Linux:
+
+```bash
+curl -X POST http://localhost:8001/score \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"You are a coach"}'
+```
+
+Example with curl on Windows PowerShell:
+
+```powershell
+curl.exe -X POST "http://localhost:8001/score" -H "Content-Type: application/json" --data-raw '{""prompt"":""You are a coach""}'
+```
+
+### Run a plugin
 
 ```bash
 arhupy plugin echo "hello"
 ```
 
-## Examples
+Output:
+
+```text
+Echo: hello
+```
+
+## Python API Examples
 
 ### Prompt
 
@@ -162,9 +328,8 @@ arhupy plugin echo "hello"
 from arhupy import Prompt
 
 prompt = Prompt("You are a {role}. Speak in {language}.")
-filled = prompt.fill(role="coding assistant", language="English")
 
-print(filled)
+print(prompt.fill(role="coding assistant", language="English"))
 prompt.preview()
 prompt.reset()
 ```
@@ -184,7 +349,48 @@ chain = PromptChain([system, user])
 print(chain.build())
 ```
 
-### Library Save And Load
+### Simple prompt chain from strings
+
+```python
+from arhupy import build_chain
+
+final_prompt = build_chain([
+    "You are a senior developer.",
+    "Explain recursion in simple terms.",
+    "Use one short example.",
+])
+
+print(final_prompt)
+```
+
+### Prompt scoring
+
+```python
+from arhupy import score_prompt
+
+result = score_prompt(
+    "You are a {role}. Explain {task} step by step in bullet points within 200 words only."
+)
+
+print(result["overall_score"])
+print(result["strengths"])
+print(result["feedback"])
+```
+
+### Prompt comparison
+
+```python
+from arhupy import compare_prompts
+
+result = compare_prompts(
+    "You are a coach",
+    "You are a strict fitness coach",
+)
+
+print(result)
+```
+
+### Save and load prompts
 
 ```python
 from arhupy import Prompt, load, save
@@ -196,9 +402,39 @@ loaded = load("summarizer")
 print(loaded.fill(style="plain English", text="Prompt engineering is useful."))
 ```
 
-Saved prompts are stored in `arhupy_library.json` in your current working directory.
+### Export and import one prompt
 
-### Token Estimation
+```python
+from arhupy import Prompt, export_prompt, import_prompt
+
+prompt = Prompt("Write a {tone} email about {topic}.")
+prompt.fill(tone="friendly", topic="a project update")
+
+export_prompt(prompt, "email_prompt.json")
+restored = import_prompt("email_prompt.json")
+
+print(restored)
+```
+
+### Export and import a prompt chain
+
+```python
+from arhupy import Prompt, PromptChain, export_chain, import_chain
+
+system = Prompt("System: {instruction}")
+user = Prompt("User: {request}")
+
+system.fill(instruction="Be concise.")
+user.fill(request="Summarize this report.")
+
+chain = PromptChain([system, user])
+export_chain(chain, "summary_chain.json")
+
+restored = import_chain("summary_chain.json")
+print(restored.build())
+```
+
+### Token estimation
 
 ```python
 from arhupy import estimate_tokens
@@ -207,50 +443,7 @@ tokens = estimate_tokens("A short prompt for an LLM.")
 print(tokens)
 ```
 
-## Prompt Scoring
-
-```bash
-arhupy score "You are a fitness coach"
-```
-
-## Smart Prompt Scoring
-
-`arhupy` scores prompts with readable local heuristics. It looks for a useful length, a clear role, a direct task, reusable placeholders, output instructions, and constraints.
-
-```bash
-arhupy score "You are a {role}. Explain {task} step by step in bullet points within 200 words only."
-```
-
-Example output:
-
-```text
-Score: 9/10
-
-Strengths:
-- Good prompt length
-- Role is defined
-- Clear task defined
-
-Improvements:
-- Prompt looks strong and ready to use.
-```
-
-## Prompt Comparison
-
-```bash
-arhupy diff "You are a fitness coach" "You are a helpful assistant"
-```
-
-## Prompt Templates
-
-Use built-in templates for common prompt patterns:
-
-```bash
-arhupy templates
-arhupy template fitness
-```
-
-In Python:
+### Built-in templates
 
 ```python
 from arhupy import Prompt, get_template, list_templates
@@ -262,114 +455,66 @@ prompt = Prompt(template)
 print(prompt.fill(concept="recursion"))
 ```
 
-## Template Autofill
-
-Fill a built-in template from the terminal. `arhupy` asks for each placeholder and prints the completed prompt.
-
-```bash
-arhupy fill coding
-```
-
-In Python:
+### Prompt history
 
 ```python
-from arhupy import fill_template
+from arhupy import add_history, get_history, get_prompt_by_index
 
-prompt = fill_template("fitness")
-print(prompt)
+add_history("You are a coach. Explain progressive overload.")
+
+print(get_history(limit=1))
+print(get_prompt_by_index(1))
 ```
 
-## Prompt Chaining
-
-Combine multiple prompt steps into one workflow-style prompt:
-
-```bash
-arhupy chain
-```
-
-Enter each prompt step when asked. Submit an empty line to finish and print the final combined prompt.
-
-In Python:
-
-```python
-from arhupy import build_chain
-
-chain = build_chain([
-    "System: Be concise.",
-    "User: Explain recursion.",
-])
-print(chain)
-```
-
-## History Comparison
-
-Compare two saved history prompts by their history indexes:
-
-```bash
-arhupy history
-arhupy compare-history 1 2
-```
-
-`arhupy` prints both prompts, their differences, a score comparison, and which prompt looks stronger.
-
-In Python:
+### History comparison
 
 ```python
 from arhupy import add_history, compare_history
 
 add_history("You are a coach.")
 add_history("You are a fitness coach. Explain warmups step by step.")
+
 print(compare_history(1, 2))
 ```
 
-## Session Export
-
-Export and import prompt history as JSON so you can move a session between folders or machines:
-
-```bash
-arhupy export-history history.json
-arhupy import-history history.json
-```
-
-Imported history entries are merged safely. Existing entries with the same prompt text and timestamp are skipped.
-
-In Python:
+### Claude integration
 
 ```python
-from arhupy import export_history, import_history
+from arhupy import Prompt, ClaudeClient
 
-export_history("history.json")
-result = import_history("history.json")
-print(result)
+client = ClaudeClient(api_key="your-api-key")
+
+prompt = Prompt("You are a {role}. Answer this: {question}")
+response = client.ask_with_template(
+    prompt,
+    role="fitness coach",
+    question="What is progressive overload?",
+)
+
+print(response)
 ```
 
-## API Mode
+### AI prompt improvement
 
-Run a local HTTP API on `localhost:8001`:
+```python
+from arhupy import improve_prompt
 
-```bash
-arhupy api
+improved = improve_prompt("You are a coach", api_key="your-api-key")
+print(improved)
 ```
 
-Endpoints accept JSON over `POST` and return JSON:
+### Plugin system
 
-```text
-POST /score   { "prompt": "You are a coach" }
-POST /diff    { "p1": "Prompt one", "p2": "Prompt two" }
-POST /improve { "prompt": "You are a coach", "api_key": "YOUR_KEY" }
+Bundled echo plugin:
+
+```python
+from arhupy import get_plugin
+
+plugin = get_plugin("echo")
+print(plugin.run("hello"))
 ```
 
-## Plugin System
-
-`arhupy` includes a small plugin system for extending the CLI with simple Python classes.
-
-Run the bundled echo plugin:
-
-```bash
-arhupy plugin echo "hello"
-```
-
-Create a plugin by subclassing `ArhupyPlugin` and giving it a unique `name`:
+Create a new plugin inside `arhupy/plugins/`:
 
 ```python
 from arhupy.plugins import ArhupyPlugin
@@ -382,118 +527,48 @@ class EchoPlugin(ArhupyPlugin):
         return f"Echo: {text}"
 ```
 
-## Prompt History
+## Local Files Created By arhupy
 
-`arhupy` stores prompts from `score`, `diff`, and `improve` commands in `arhupy_history.json` in your current working directory.
+`arhupy` keeps local project data in your current working directory:
 
-```bash
-arhupy score "You are a coach. Explain warmups step by step."
-arhupy history
-arhupy history 5
-arhupy reuse 1
-arhupy reuse 1 --score
-```
+| File | Purpose |
+| --- | --- |
+| `arhupy_library.json` | Saved prompt templates |
+| `arhupy_versions.json` | Versioned prompt snapshots |
+| `arhupy_history.json` | Prompt history |
 
-In Python:
+These files are ignored by the included `.gitignore` so private prompt data does not get committed by accident.
 
-```python
-from arhupy import add_history, get_history, get_prompt_by_index
+## Design Goals
 
-add_history("You are a coach. Explain progressive overload.")
-print(get_history(limit=1))
-print(get_prompt_by_index(1))
-```
+- No external runtime dependencies
+- Beginner-friendly Python APIs
+- Simple JSON storage
+- Clear command-line output
+- Local-first workflows
+- Easy GitHub and PyPI publishing
+- Extensible plugin architecture
 
-## Interactive Mode
+## Development
 
-Run an interactive prompt workflow from the terminal:
-
-```bash
-arhupy interactive
-```
-
-Interactive mode lets you enter one prompt, then score it, improve it, compare it with another prompt, save it to the prompt library, or exit.
-
-## Web Dashboard
+Clone and install in editable mode:
 
 ```bash
-arhupy web
+git clone https://github.com/Typeshi-dotcom/arhupy.git
+cd arhupy
+pip install -e .
 ```
 
-This starts a local dashboard at `http://localhost:8000`.
-
-## Saving and Sharing Prompts
+Run tests:
 
 ```bash
-arhupy save my_prompt "You are a coach"
-arhupy export prompts.json
-arhupy import prompts.json
-arhupy list
+python -m unittest
 ```
 
-## AI Prompt Improvement
+Build package artifacts:
 
 ```bash
-arhupy improve "You are a coach" --api-key YOUR_KEY
-```
-
-Use a real Claude API key for live AI improvement. The `YOUR_KEY` placeholder runs a local demo improvement so the command can be tested safely.
-
-## Claude Integration
-
-```python
-from arhupy import Prompt, ClaudeClient
-
-client = ClaudeClient(api_key="your-api-key")
-
-prompt = Prompt("You are a {role}. Answer this: {question}")
-response = client.ask_with_template(prompt, role="fitness coach", question="What is progressive overload?")
-print(response)
-```
-
-## Export and Import
-
-Save a prompt to JSON:
-
-```python
-from arhupy import Prompt, export_prompt
-
-prompt = Prompt("Write a {tone} email about {topic}.")
-prompt.fill(tone="friendly", topic="a project update")
-
-export_prompt(prompt, "email_prompt.json")
-```
-
-Load a prompt from JSON:
-
-```python
-from arhupy import import_prompt
-
-prompt = import_prompt("email_prompt.json")
-print(prompt)
-```
-
-Save a prompt chain to JSON:
-
-```python
-from arhupy import Prompt, PromptChain, export_chain
-
-system = Prompt("System: {instruction}")
-user = Prompt("User: {request}")
-system.fill(instruction="Be concise.")
-user.fill(request="Summarize this report.")
-
-chain = PromptChain([system, user])
-export_chain(chain, "summary_chain.json")
-```
-
-Load a prompt chain from JSON:
-
-```python
-from arhupy import import_chain
-
-chain = import_chain("summary_chain.json")
-print(chain.build())
+python -m build
 ```
 
 ## Contributing

@@ -6,6 +6,10 @@
 
 - Plugin support for extending arhupy
 
+### Changed
+
+- Expanded README with detailed command usage, API examples, and PyPI-friendly visual tables
+
 ## [1.9.0] - API Mode
 
 ### Added

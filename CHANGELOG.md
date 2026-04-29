@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - Prompt History
+
+### Added
+
+- Prompt history tracking and reuse
+
 ## [1.2.0] - Prompt Templates
 
 ### Added

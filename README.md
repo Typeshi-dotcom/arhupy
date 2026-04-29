@@ -45,6 +45,7 @@ print(prompt.fill(role="teacher", language="English"))
 - Compare prompts and see scoring differences from the CLI
 - Improve prompts with Claude through a simple command
 - Start faster with built-in prompt templates
+- Reuse recent prompts from local history
 - Launch a local web dashboard for scoring and comparison
 - Track prompt template versions with notes
 - No external dependencies
@@ -97,6 +98,15 @@ List and view built-in templates:
 ```bash
 arhupy templates
 arhupy template coding
+```
+
+Show and reuse recent prompts:
+
+```bash
+arhupy history
+arhupy history 5
+arhupy reuse 2
+arhupy reuse 2 --score
 ```
 
 ## Examples
@@ -205,6 +215,28 @@ print(list_templates())
 template = get_template("coding")
 prompt = Prompt(template)
 print(prompt.fill(concept="recursion"))
+```
+
+## Prompt History
+
+`arhupy` stores prompts from `score`, `diff`, and `improve` commands in `arhupy_history.json` in your current working directory.
+
+```bash
+arhupy score "You are a coach. Explain warmups step by step."
+arhupy history
+arhupy history 5
+arhupy reuse 1
+arhupy reuse 1 --score
+```
+
+In Python:
+
+```python
+from arhupy import add_history, get_history, get_prompt_by_index
+
+add_history("You are a coach. Explain progressive overload.")
+print(get_history(limit=1))
+print(get_prompt_by_index(1))
 ```
 
 ## Web Dashboard

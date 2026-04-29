@@ -3,6 +3,7 @@
 import argparse
 
 from .diff import compare_prompts
+from .history import add_history, get_history as get_prompt_history, get_prompt_by_index
 from .improver import improve_prompt
 from .library import export_all, import_all, list_all, save
 from .prompt import Prompt
@@ -36,6 +37,13 @@ def main(argv=None):
     import_parser = subparsers.add_parser("import", help="Import saved prompts")
     import_parser.add_argument("filepath", help="Input JSON file")
 
+    history_parser = subparsers.add_parser("history", help="Show recent prompts")
+    history_parser.add_argument("limit", nargs="?", type=int, help="Number of prompts to show")
+
+    reuse_parser = subparsers.add_parser("reuse", help="Reuse a prompt from history")
+    reuse_parser.add_argument("index", type=int, help="History index to reuse")
+    reuse_parser.add_argument("--score", action="store_true", help="Score the reused prompt")
+
     template_parser = subparsers.add_parser("template", help="Show a built-in template")
     template_parser.add_argument("name", help="Template name")
 
@@ -45,11 +53,15 @@ def main(argv=None):
 
     args = parser.parse_args(argv)
     if args.command == "score":
-        result = score_prompt(" ".join(args.prompt))
+        prompt_text = " ".join(args.prompt)
+        add_history(prompt_text)
+        result = score_prompt(prompt_text)
         _print_score(result)
         return 0
     if args.command == "diff":
         prompt_1, prompt_2 = _get_diff_prompts(args.prompts)
+        add_history(prompt_1)
+        add_history(prompt_2)
         result = compare_prompts(prompt_1, prompt_2)
         score_1 = score_prompt(prompt_1)["overall_score"]
         score_2 = score_prompt(prompt_2)["overall_score"]
@@ -57,6 +69,7 @@ def main(argv=None):
         return 0
     if args.command == "improve":
         prompt_text = " ".join(args.prompt)
+        add_history(prompt_text)
         try:
             improved = improve_prompt(prompt_text, args.api_key)
         except Exception as exc:
@@ -79,6 +92,20 @@ def main(argv=None):
     if args.command == "import":
         result = import_all(args.filepath)
         _print_import_result(result)
+        return 0
+    if args.command == "history":
+        _print_history(get_prompt_history(args.limit))
+        return 0
+    if args.command == "reuse":
+        try:
+            prompt_text = get_prompt_by_index(args.index)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        print(prompt_text)
+        if args.score:
+            print()
+            _print_score(score_prompt(prompt_text))
         return 0
     if args.command == "template":
         try:
@@ -150,6 +177,22 @@ def _print_import_result(result):
         print(f"Skipped prompts: {skipped}")
         for name in result["skipped"]:
             print(f"- {name}")
+
+
+def _print_history(entries):
+    """Print prompt history entries with one-based numbering."""
+    if not entries:
+        print("No prompt history found.")
+        return
+
+    print("Recent prompts:")
+    for index, entry in enumerate(entries, start=1):
+        prompt = entry.get("prompt", "")
+        timestamp = entry.get("timestamp", "")
+        if timestamp:
+            print(f"{index}. {prompt} ({timestamp})")
+        else:
+            print(f"{index}. {prompt}")
 
 
 def _get_diff_prompts(prompts):

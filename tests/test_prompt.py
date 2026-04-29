@@ -12,12 +12,15 @@ from arhupy import (
     ClaudeClient,
     Prompt,
     PromptChain,
+    add_history,
     compare_prompts,
     estimate_tokens,
     export_all,
     export_chain,
     export_prompt,
     get_template,
+    get_history,
+    get_prompt_by_index,
     improve_prompt,
     import_all,
     import_chain,
@@ -26,6 +29,7 @@ from arhupy import (
     list_templates,
     load,
     save,
+    save_version,
     score_prompt,
 )
 from arhupy.cli import main as cli_main
@@ -368,10 +372,146 @@ class TestPrompt(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("Error: Template not found", output.getvalue())
 
+    def test_history_save(self):
+        """Prompt history saves prompts with timestamps."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                entry = add_history("You are a coach.")
+                history = get_history()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(entry["prompt"], "You are a coach.")
+        self.assertIn("timestamp", entry)
+        self.assertEqual(history[0]["prompt"], "You are a coach.")
+
+    def test_history_limit(self):
+        """Prompt history can return a limited number of latest entries."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                add_history("First prompt")
+                add_history("Second prompt")
+                limited = get_history(limit=1)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(len(limited), 1)
+        self.assertEqual(limited[0]["prompt"], "Second prompt")
+
+    def test_history_reuse_by_index(self):
+        """Prompt history can reuse prompts by one-based latest-first index."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                add_history("First prompt")
+                add_history("Second prompt")
+                latest = get_prompt_by_index(1)
+                older = get_prompt_by_index(2)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(latest, "Second prompt")
+        self.assertEqual(older, "First prompt")
+
+    def test_history_invalid_index_raises_clear_error(self):
+        """Prompt history raises a clear error for invalid indexes."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                add_history("Only prompt")
+                with self.assertRaises(Exception) as context:
+                    get_prompt_by_index(2)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("No prompt found", str(context.exception))
+
+    def test_get_history_keeps_version_history_compatibility(self):
+        """get_history still supports version history lookups by prompt name."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                prompt = Prompt("Hello, {name}.")
+                save_version("greeting", prompt, "1.0.0", notes="Initial")
+                versions = get_history("greeting")
+                versions_by_name = get_history(name="greeting")
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(versions[0]["version"], "1.0.0")
+        self.assertEqual(versions_by_name[0]["notes"], "Initial")
+
+    def test_cli_history_and_reuse_commands(self):
+        """History and reuse CLI commands show recent prompts."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                add_history("First prompt")
+                add_history("Second prompt")
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as history_output:
+                    history_exit_code = cli_main(["history", "1"])
+                with mock.patch("sys.stdout", new_callable=StringIO) as reuse_output:
+                    reuse_exit_code = cli_main(["reuse", "2"])
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(history_exit_code, 0)
+        self.assertEqual(reuse_exit_code, 0)
+        self.assertIn("Recent prompts:", history_output.getvalue())
+        self.assertIn("Second prompt", history_output.getvalue())
+        self.assertNotIn("First prompt", history_output.getvalue())
+        self.assertIn("First prompt", reuse_output.getvalue())
+
+    def test_cli_reuse_handles_invalid_index(self):
+        """The reuse CLI command reports invalid indexes cleanly."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    exit_code = cli_main(["reuse", "1"])
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Error: No prompt found", output.getvalue())
+
+    def test_cli_score_adds_prompt_history(self):
+        """The score CLI command stores scored prompts in history."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                with mock.patch("sys.stdout", new_callable=StringIO):
+                    exit_code = cli_main(["score", "You are a coach"])
+                history = get_history()
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(history[0]["prompt"], "You are a coach")
+
     def test_cli_score_prints_clean_output(self):
         """The score CLI command prints readable scoring output."""
-        with mock.patch("sys.stdout", new_callable=StringIO) as output:
-            exit_code = cli_main(["score", "You are a fitness coach"])
+        with mock.patch("arhupy.cli.add_history"):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main(["score", "You are a fitness coach"])
 
         contents = output.getvalue()
         self.assertEqual(exit_code, 0)
@@ -381,8 +521,9 @@ class TestPrompt(unittest.TestCase):
 
     def test_cli_score_handles_empty_prompt(self):
         """The score CLI command handles an empty prompt without crashing."""
-        with mock.patch("sys.stdout", new_callable=StringIO) as output:
-            exit_code = cli_main(["score"])
+        with mock.patch("arhupy.cli.add_history"):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main(["score"])
 
         contents = output.getvalue()
         self.assertEqual(exit_code, 0)
@@ -401,12 +542,13 @@ class TestPrompt(unittest.TestCase):
 
     def test_cli_diff_prints_comparison_output(self):
         """The diff CLI command prints prompt comparison and scoring output."""
-        with mock.patch("sys.stdout", new_callable=StringIO) as output:
-            exit_code = cli_main([
-                "diff",
-                "You are a fitness coach",
-                "You are a helpful assistant",
-            ])
+        with mock.patch("arhupy.cli.add_history"):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main([
+                    "diff",
+                    "You are a fitness coach",
+                    "You are a helpful assistant",
+                ])
 
         contents = output.getvalue()
         self.assertEqual(exit_code, 0)
@@ -421,8 +563,9 @@ class TestPrompt(unittest.TestCase):
 
     def test_cli_diff_handles_empty_prompts(self):
         """The diff CLI command handles omitted prompts without crashing."""
-        with mock.patch("sys.stdout", new_callable=StringIO) as output:
-            exit_code = cli_main(["diff"])
+        with mock.patch("arhupy.cli.add_history"):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main(["diff"])
 
         contents = output.getvalue()
         self.assertEqual(exit_code, 0)
@@ -433,14 +576,15 @@ class TestPrompt(unittest.TestCase):
 
     def test_cli_improve_prints_original_and_improved_prompt(self):
         """The improve CLI command prints original and improved prompt text."""
-        with mock.patch("arhupy.cli.improve_prompt", return_value="Improved prompt") as improve:
-            with mock.patch("sys.stdout", new_callable=StringIO) as output:
-                exit_code = cli_main([
-                    "improve",
-                    "You are a coach",
-                    "--api-key",
-                    "test-key",
-                ])
+        with mock.patch("arhupy.cli.add_history"):
+            with mock.patch("arhupy.cli.improve_prompt", return_value="Improved prompt") as improve:
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    exit_code = cli_main([
+                        "improve",
+                        "You are a coach",
+                        "--api-key",
+                        "test-key",
+                    ])
 
         contents = output.getvalue()
         self.assertEqual(exit_code, 0)
@@ -452,8 +596,9 @@ class TestPrompt(unittest.TestCase):
 
     def test_cli_improve_handles_missing_api_key_cleanly(self):
         """The improve CLI command reports a clean error when the key is missing."""
-        with mock.patch("sys.stdout", new_callable=StringIO) as output:
-            exit_code = cli_main(["improve", "You are a coach"])
+        with mock.patch("arhupy.cli.add_history"):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main(["improve", "You are a coach"])
 
         contents = output.getvalue()
         self.assertEqual(exit_code, 1)

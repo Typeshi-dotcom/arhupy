@@ -40,3 +40,8 @@ class PromptChain:
 
         prompts = [Prompt.from_dict(item) for item in prompt_data]
         return cls(prompts)
+
+
+def build_chain(prompts):
+    """Build a combined prompt from a list of prompt strings."""
+    return "\n".join(str(prompt) for prompt in prompts)

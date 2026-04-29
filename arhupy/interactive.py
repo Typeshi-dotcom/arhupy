@@ -1,5 +1,6 @@
 """Interactive command-line session for arhupy."""
 
+from .chain import build_chain
 from .diff import compare_prompts
 from .improver import improve_prompt
 from .library import save
@@ -30,8 +31,10 @@ def run_interactive():
             break
         elif choice == "6":
             _handle_fill_template()
+        elif choice == "7":
+            _handle_build_chain()
         else:
-            print("Invalid option. Please choose 1, 2, 3, 4, 5, or 6.")
+            print("Invalid option. Please choose 1, 2, 3, 4, 5, 6, or 7.")
 
 
 def _print_menu():
@@ -43,6 +46,7 @@ def _print_menu():
     print("4. Save prompt")
     print("5. Exit")
     print("6. Fill template")
+    print("7. Build prompt chain")
 
 
 def _handle_score(prompt_text):
@@ -103,6 +107,25 @@ def _handle_fill_template():
 
     print("Filled prompt:")
     print(filled)
+
+
+def _handle_build_chain():
+    """Build and print a prompt chain from user-entered prompts."""
+    prompts = []
+    index = 1
+    while True:
+        prompt = input(f"Enter prompt {index}: ")
+        if not prompt:
+            break
+        prompts.append(prompt)
+        index += 1
+
+    if not prompts:
+        print("No prompts entered.")
+        return
+
+    print("Final prompt chain:")
+    print(build_chain(prompts))
 
 
 def _format_words(words):

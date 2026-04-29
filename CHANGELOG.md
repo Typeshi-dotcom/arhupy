@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.6.0] - Prompt Chaining
+
+### Added
+
+- Ability to combine prompts into workflows
+
 ## [1.5.0] - Template Autofill
 
 ### Added

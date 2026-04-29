@@ -122,6 +122,12 @@ Fill a built-in template:
 arhupy fill coding
 ```
 
+Build a prompt chain:
+
+```bash
+arhupy chain
+```
+
 ## Examples
 
 ### Prompt
@@ -245,6 +251,28 @@ from arhupy import fill_template
 
 prompt = fill_template("fitness")
 print(prompt)
+```
+
+## Prompt Chaining
+
+Combine multiple prompt steps into one workflow-style prompt:
+
+```bash
+arhupy chain
+```
+
+Enter each prompt step when asked. Submit an empty line to finish and print the final combined prompt.
+
+In Python:
+
+```python
+from arhupy import build_chain
+
+chain = build_chain([
+    "System: Be concise.",
+    "User: Explain recursion.",
+])
+print(chain)
 ```
 
 ## Prompt History

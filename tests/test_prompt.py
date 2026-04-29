@@ -13,6 +13,7 @@ from arhupy import (
     Prompt,
     PromptChain,
     add_history,
+    build_chain,
     compare_prompts,
     estimate_tokens,
     export_all,
@@ -61,6 +62,22 @@ class TestPrompt(unittest.TestCase):
         result = chain.build()
 
         self.assertEqual(result, "System: Be concise.\nUser: Explain tokens.")
+
+    def test_build_chain_with_two_prompts(self):
+        """build_chain joins two prompt strings with a newline."""
+        result = build_chain(["System: Be concise.", "User: Explain tokens."])
+
+        self.assertEqual(result, "System: Be concise.\nUser: Explain tokens.")
+
+    def test_build_chain_with_multiple_prompts(self):
+        """build_chain joins multiple prompt strings in order."""
+        result = build_chain(["One", "Two", "Three"])
+
+        self.assertEqual(result, "One\nTwo\nThree")
+
+    def test_build_chain_empty_input(self):
+        """build_chain returns an empty string for no prompts."""
+        self.assertEqual(build_chain([]), "")
 
     def test_estimate_tokens_returns_correct_integer(self):
         """estimate_tokens returns len(text) / 4 rounded up."""
@@ -419,6 +436,27 @@ class TestPrompt(unittest.TestCase):
         self.assertEqual(exit_code, 1)
         self.assertIn("Error: Template not found", output.getvalue())
 
+    def test_cli_chain_builds_prompt_chain(self):
+        """The chain CLI command collects prompts and prints a combined chain."""
+        inputs = iter(["Prompt one", "Prompt two", ""])
+        with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main(["chain"])
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Final prompt chain:", contents)
+        self.assertIn("Prompt one\nPrompt two", contents)
+
+    def test_cli_chain_handles_empty_input(self):
+        """The chain CLI command handles empty input cleanly."""
+        with mock.patch("builtins.input", return_value=""):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                exit_code = cli_main(["chain"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("No prompts entered.", output.getvalue())
+
     def test_history_save(self):
         """Prompt history saves prompts with timestamps."""
         original_cwd = os.getcwd()
@@ -569,6 +607,17 @@ class TestPrompt(unittest.TestCase):
         contents = output.getvalue()
         self.assertIn("Filled prompt:", contents)
         self.assertIn("Explain recursion", contents)
+
+    def test_interactive_build_chain_and_exit(self):
+        """Interactive mode can build a prompt chain and exit."""
+        inputs = iter(["You are a coach", "7", "Prompt one", "Prompt two", "", "5"])
+        with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+            with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                run_interactive()
+
+        contents = output.getvalue()
+        self.assertIn("Final prompt chain:", contents)
+        self.assertIn("Prompt one\nPrompt two", contents)
 
     def test_cli_interactive_calls_run_interactive(self):
         """The interactive CLI command starts interactive mode."""

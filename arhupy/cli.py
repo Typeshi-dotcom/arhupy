@@ -2,6 +2,7 @@
 
 import argparse
 
+from .chain import build_chain
 from .diff import compare_prompts
 from .history import add_history, get_history as get_prompt_history, get_prompt_by_index
 from .improver import improve_prompt
@@ -51,6 +52,7 @@ def main(argv=None):
     fill_parser = subparsers.add_parser("fill", help="Fill a built-in template")
     fill_parser.add_argument("name", help="Template name")
 
+    subparsers.add_parser("chain", help="Build a prompt chain")
     subparsers.add_parser("list", help="List saved prompts")
     subparsers.add_parser("templates", help="List built-in templates")
     subparsers.add_parser("interactive", help="Start interactive mode")
@@ -125,6 +127,14 @@ def main(argv=None):
         except Exception as exc:
             print(f"Error: {exc}")
             return 1
+        return 0
+    if args.command == "chain":
+        prompts = _collect_prompt_chain()
+        if not prompts:
+            print("No prompts entered.")
+            return 0
+        print("Final prompt chain:")
+        print(build_chain(prompts))
         return 0
     if args.command == "list":
         list_all()
@@ -208,6 +218,19 @@ def _print_history(entries):
             print(f"{index}. {prompt} ({timestamp})")
         else:
             print(f"{index}. {prompt}")
+
+
+def _collect_prompt_chain():
+    """Collect prompt lines until the user enters an empty line."""
+    prompts = []
+    index = 1
+    while True:
+        prompt = input(f"Enter prompt {index}: ")
+        if not prompt:
+            break
+        prompts.append(prompt)
+        index += 1
+    return prompts
 
 
 def _get_diff_prompts(prompts):

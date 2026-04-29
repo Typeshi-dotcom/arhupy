@@ -1,6 +1,6 @@
 """arhupy: A prompt engineering toolkit for LLMs."""
 
-from .chain import PromptChain
+from .chain import PromptChain, build_chain
 from .claude import ClaudeClient
 from .diff import compare_prompts
 from .exporter import export_chain, export_prompt, import_chain, import_prompt
@@ -14,7 +14,7 @@ from .templates import fill_template, get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history as get_version_history, print_history, save_version
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 
 
 def get_history(*args, **kwargs):
@@ -27,6 +27,7 @@ def get_history(*args, **kwargs):
 __all__ = [
     "Prompt",
     "PromptChain",
+    "build_chain",
     "ClaudeClient",
     "save",
     "load",

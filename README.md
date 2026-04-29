@@ -617,6 +617,31 @@ Build package artifacts:
 python -m build
 ```
 
+## Deployment
+
+`arhupy` can run its web dashboard in deployment environments that provide a `PORT` environment variable.
+
+The deployment entry point is:
+
+```bash
+python app.py
+```
+
+The server binds to `0.0.0.0` and reads the port from `PORT`, defaulting to `8000` locally:
+
+```bash
+PORT=8080 python app.py
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:PORT = "8080"
+python app.py
+```
+
+`requirements.txt` is intentionally minimal because `arhupy` has no external runtime dependencies.
+
 ## Contributing
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, test commands, and pull request guidance.

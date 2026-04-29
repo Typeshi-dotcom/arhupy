@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.3.0] - Deployment Ready
+
+### Added
+
+- Made server deployable
+
 ## [2.2.0] - Shareable Links
 
 ### Added

@@ -1,5 +1,6 @@
 """Local web dashboard for arhupy."""
 
+import os
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, unquote
@@ -12,8 +13,11 @@ from .scorer import score_prompt
 from .share import get_shared
 
 
-def run_server(host="localhost", port=8000):
+def run_server(host="0.0.0.0", port=None):
     """Start the local arhupy web dashboard server."""
+    if port is None:
+        port = int(os.environ.get("PORT", 8000))
+
     server = ThreadingHTTPServer((host, port), DashboardHandler)
     print(f"Server running at http://{host}:{port}", flush=True)
     try:

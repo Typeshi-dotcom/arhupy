@@ -4,7 +4,7 @@ import argparse
 
 from .chain import build_chain
 from .diff import compare_prompts
-from .history import add_history, get_history as get_prompt_history, get_prompt_by_index
+from .history import add_history, compare_history, get_history as get_prompt_history, get_prompt_by_index
 from .improver import improve_prompt
 from .interactive import run_interactive
 from .library import export_all, import_all, list_all, save
@@ -45,6 +45,10 @@ def main(argv=None):
     reuse_parser = subparsers.add_parser("reuse", help="Reuse a prompt from history")
     reuse_parser.add_argument("index", type=int, help="History index to reuse")
     reuse_parser.add_argument("--score", action="store_true", help="Score the reused prompt")
+
+    compare_history_parser = subparsers.add_parser("compare-history", help="Compare prompts from history")
+    compare_history_parser.add_argument("index1", type=int, help="First history index")
+    compare_history_parser.add_argument("index2", type=int, help="Second history index")
 
     template_parser = subparsers.add_parser("template", help="Show a built-in template")
     template_parser.add_argument("name", help="Template name")
@@ -114,6 +118,14 @@ def main(argv=None):
             print()
             _print_score(score_prompt(prompt_text))
         return 0
+    if args.command == "compare-history":
+        try:
+            result = compare_history(args.index1, args.index2)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        _print_history_comparison(result)
+        return 0
     if args.command == "template":
         try:
             print(get_template(args.name))
@@ -175,6 +187,34 @@ def _print_diff(result, score_1, score_2):
     print(f"Common words: {_format_words(result['common_words'])}")
     print(f"Unique to prompt 1: {_format_words(result['unique_to_p1'])}")
     print(f"Unique to prompt 2: {_format_words(result['unique_to_p2'])}")
+    print(f"Prompt 1 score: {score_1}/10")
+    print(f"Prompt 2 score: {score_2}/10")
+    if score_1 > score_2:
+        print("Better prompt: Prompt 1")
+    elif score_2 > score_1:
+        print("Better prompt: Prompt 2")
+    else:
+        print("Better prompt: Tie")
+
+
+def _print_history_comparison(result):
+    """Print comparison output for two prompts from history."""
+    prompt_1 = result["prompt_1"]
+    prompt_2 = result["prompt_2"]
+    comparison = result["comparison"]
+    score_1 = score_prompt(prompt_1)["overall_score"]
+    score_2 = score_prompt(prompt_2)["overall_score"]
+
+    print("Prompt 1:")
+    print(prompt_1)
+    print("Prompt 2:")
+    print(prompt_2)
+    print(f"Length difference: {comparison['length_diff']}")
+    print(f"Word difference: {comparison['word_diff']}")
+    print(f"Common words: {_format_words(comparison['common_words'])}")
+    print(f"Unique to prompt 1: {_format_words(comparison['unique_to_p1'])}")
+    print(f"Unique to prompt 2: {_format_words(comparison['unique_to_p2'])}")
+    print("Score comparison:")
     print(f"Prompt 1 score: {score_1}/10")
     print(f"Prompt 2 score: {score_2}/10")
     if score_1 > score_2:

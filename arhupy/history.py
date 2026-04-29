@@ -4,6 +4,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .diff import compare_prompts
+
 HISTORY_FILE = "arhupy_history.json"
 
 
@@ -87,3 +89,14 @@ def get_prompt_by_index(index):
     if prompt_index > len(entries):
         raise Exception(f"No prompt found at history index {index}.")
     return entries[prompt_index - 1]["prompt"]
+
+
+def compare_history(index1, index2):
+    """Compare two prompts from history by one-based indexes."""
+    prompt_1 = get_prompt_by_index(index1)
+    prompt_2 = get_prompt_by_index(index2)
+    return {
+        "prompt_1": prompt_1,
+        "prompt_2": prompt_2,
+        "comparison": compare_prompts(prompt_1, prompt_2),
+    }

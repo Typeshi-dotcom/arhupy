@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.0] - History Comparison
+
+### Added
+
+- Comparison of prompts from history
+
 ## [1.6.0] - Prompt Chaining
 
 ### Added

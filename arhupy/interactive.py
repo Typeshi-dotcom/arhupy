@@ -2,6 +2,7 @@
 
 from .chain import build_chain
 from .diff import compare_prompts
+from .history import compare_history
 from .improver import improve_prompt
 from .library import save
 from .prompt import Prompt
@@ -33,8 +34,10 @@ def run_interactive():
             _handle_fill_template()
         elif choice == "7":
             _handle_build_chain()
+        elif choice == "8":
+            _handle_compare_history()
         else:
-            print("Invalid option. Please choose 1, 2, 3, 4, 5, 6, or 7.")
+            print("Invalid option. Please choose 1, 2, 3, 4, 5, 6, 7, or 8.")
 
 
 def _print_menu():
@@ -47,6 +50,7 @@ def _print_menu():
     print("5. Exit")
     print("6. Fill template")
     print("7. Build prompt chain")
+    print("8. Compare history prompts")
 
 
 def _handle_score(prompt_text):
@@ -126,6 +130,44 @@ def _handle_build_chain():
 
     print("Final prompt chain:")
     print(build_chain(prompts))
+
+
+def _handle_compare_history():
+    """Compare two prompts from prompt history."""
+    index_1 = input("Enter first history index: ").strip()
+    index_2 = input("Enter second history index: ").strip()
+    try:
+        result = compare_history(index_1, index_2)
+    except Exception as exc:
+        print(f"Error: {exc}")
+        return
+
+    _print_history_comparison(result)
+
+
+def _print_history_comparison(result):
+    """Print comparison output for history prompts."""
+    prompt_1 = result["prompt_1"]
+    prompt_2 = result["prompt_2"]
+    comparison = result["comparison"]
+    score_1 = score_prompt(prompt_1)["overall_score"]
+    score_2 = score_prompt(prompt_2)["overall_score"]
+
+    print("Prompt 1:")
+    print(prompt_1)
+    print("Prompt 2:")
+    print(prompt_2)
+    print(f"Length difference: {comparison['length_diff']}")
+    print(f"Word difference: {comparison['word_diff']}")
+    print("Score comparison:")
+    print(f"Prompt 1 score: {score_1}/10")
+    print(f"Prompt 2 score: {score_2}/10")
+    if score_1 > score_2:
+        print("Better prompt: Prompt 1")
+    elif score_2 > score_1:
+        print("Better prompt: Prompt 2")
+    else:
+        print("Better prompt: Tie")
 
 
 def _format_words(words):

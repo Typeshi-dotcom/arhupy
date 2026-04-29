@@ -128,6 +128,12 @@ Build a prompt chain:
 arhupy chain
 ```
 
+Compare prompts from history:
+
+```bash
+arhupy compare-history 1 2
+```
+
 ## Examples
 
 ### Prompt
@@ -273,6 +279,27 @@ chain = build_chain([
     "User: Explain recursion.",
 ])
 print(chain)
+```
+
+## History Comparison
+
+Compare two saved history prompts by their history indexes:
+
+```bash
+arhupy history
+arhupy compare-history 1 2
+```
+
+`arhupy` prints both prompts, their differences, a score comparison, and which prompt looks stronger.
+
+In Python:
+
+```python
+from arhupy import add_history, compare_history
+
+add_history("You are a coach.")
+add_history("You are a fitness coach. Explain warmups step by step.")
+print(compare_history(1, 2))
 ```
 
 ## Prompt History

@@ -14,6 +14,7 @@ from arhupy import (
     PromptChain,
     add_history,
     build_chain,
+    compare_history,
     compare_prompts,
     estimate_tokens,
     export_all,
@@ -521,6 +522,56 @@ class TestPrompt(unittest.TestCase):
 
         self.assertIn("No prompt found", str(context.exception))
 
+    def test_compare_history_valid_indexes(self):
+        """compare_history compares two prompts by history index."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                add_history("You are a coach")
+                add_history("You are a strict fitness coach")
+                result = compare_history(1, 2)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(result["prompt_1"], "You are a strict fitness coach")
+        self.assertEqual(result["prompt_2"], "You are a coach")
+        self.assertIn("length_diff", result["comparison"])
+        self.assertIn("common_words", result["comparison"])
+
+    def test_compare_history_invalid_index_raises_clear_error(self):
+        """compare_history reports invalid history indexes clearly."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                add_history("Only prompt")
+                with self.assertRaises(Exception) as context:
+                    compare_history(1, 2)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertIn("No prompt found", str(context.exception))
+
+    def test_compare_history_same_index(self):
+        """compare_history supports comparing a prompt with itself."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+
+                add_history("Same prompt")
+                result = compare_history(1, 1)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(result["prompt_1"], "Same prompt")
+        self.assertEqual(result["prompt_2"], "Same prompt")
+        self.assertEqual(result["comparison"]["length_diff"], 0)
+        self.assertEqual(result["comparison"]["word_diff"], 0)
+
     def test_get_history_keeps_version_history_compatibility(self):
         """get_history still supports version history lookups by prompt name."""
         original_cwd = os.getcwd()
@@ -560,6 +611,43 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("Second prompt", history_output.getvalue())
         self.assertNotIn("First prompt", history_output.getvalue())
         self.assertIn("First prompt", reuse_output.getvalue())
+
+    def test_cli_compare_history_prints_comparison(self):
+        """The compare-history CLI command compares saved history prompts."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                add_history("You are a coach")
+                add_history("You are a strict fitness coach")
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    exit_code = cli_main(["compare-history", "1", "2"])
+            finally:
+                os.chdir(original_cwd)
+
+        contents = output.getvalue()
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Prompt 1:", contents)
+        self.assertIn("Prompt 2:", contents)
+        self.assertIn("Score comparison:", contents)
+        self.assertIn("Better prompt:", contents)
+
+    def test_cli_compare_history_handles_invalid_index(self):
+        """The compare-history CLI command reports invalid indexes cleanly."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                add_history("Only prompt")
+
+                with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                    exit_code = cli_main(["compare-history", "1", "2"])
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Error: No prompt found", output.getvalue())
 
     def test_cli_reuse_handles_invalid_index(self):
         """The reuse CLI command reports invalid indexes cleanly."""
@@ -618,6 +706,27 @@ class TestPrompt(unittest.TestCase):
         contents = output.getvalue()
         self.assertIn("Final prompt chain:", contents)
         self.assertIn("Prompt one\nPrompt two", contents)
+
+    def test_interactive_compare_history_and_exit(self):
+        """Interactive mode can compare prompts from history."""
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                os.chdir(temp_dir)
+                add_history("You are a coach")
+                add_history("You are a strict fitness coach")
+                inputs = iter(["Starter prompt", "8", "1", "2", "5"])
+
+                with mock.patch("builtins.input", side_effect=lambda _: next(inputs)):
+                    with mock.patch("sys.stdout", new_callable=StringIO) as output:
+                        run_interactive()
+            finally:
+                os.chdir(original_cwd)
+
+        contents = output.getvalue()
+        self.assertIn("Prompt 1:", contents)
+        self.assertIn("Score comparison:", contents)
+        self.assertIn("Better prompt:", contents)
 
     def test_cli_interactive_calls_run_interactive(self):
         """The interactive CLI command starts interactive mode."""

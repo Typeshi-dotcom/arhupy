@@ -16,6 +16,7 @@ from .history import (
 from .improver import improve_prompt
 from .interactive import run_interactive
 from .library import export_all, import_all, list_all, save
+from .plugins import get_plugin
 from .prompt import Prompt
 from .scorer import score_prompt
 from .templates import fill_template, get_template, list_templates
@@ -69,6 +70,10 @@ def main(argv=None):
 
     fill_parser = subparsers.add_parser("fill", help="Fill a built-in template")
     fill_parser.add_argument("name", help="Template name")
+
+    plugin_parser = subparsers.add_parser("plugin", help="Run an arhupy plugin")
+    plugin_parser.add_argument("name", help="Plugin name")
+    plugin_parser.add_argument("args", nargs="*", help="Arguments to pass to the plugin")
 
     subparsers.add_parser("chain", help="Build a prompt chain")
     subparsers.add_parser("list", help="List saved prompts")
@@ -179,6 +184,16 @@ def main(argv=None):
             return 0
         print("Final prompt chain:")
         print(build_chain(prompts))
+        return 0
+    if args.command == "plugin":
+        try:
+            plugin = get_plugin(args.name)
+            result = plugin.run(*args.args)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return 1
+        if result is not None:
+            print(result)
         return 0
     if args.command == "list":
         list_all()

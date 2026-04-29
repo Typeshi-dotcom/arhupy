@@ -16,13 +16,14 @@ from .history import (
 from .improver import improve_prompt
 from .interactive import run_interactive
 from .library import delete, export_all, import_all, list_all, load, save
+from .plugins import ArhupyPlugin, get_plugin, load_plugins
 from .prompt import Prompt
 from .scorer import score_prompt
 from .templates import fill_template, get_template, list_templates
 from .tokens import estimate_tokens
 from .versioning import get_history as get_version_history, print_history, save_version
 
-__version__ = "1.9.0"
+__version__ = "2.0.0"
 
 
 def get_history(*args, **kwargs):
@@ -36,6 +37,9 @@ __all__ = [
     "Prompt",
     "PromptChain",
     "run_api_server",
+    "ArhupyPlugin",
+    "load_plugins",
+    "get_plugin",
     "build_chain",
     "ClaudeClient",
     "save",

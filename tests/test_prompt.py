@@ -24,6 +24,7 @@ from arhupy import (
     fill_template,
     get_template,
     get_history,
+    get_plugin,
     get_prompt_by_index,
     improve_prompt,
     import_all,
@@ -32,6 +33,7 @@ from arhupy import (
     import_prompt,
     list_all,
     list_templates,
+    load_plugins,
     load,
     run_interactive,
     save,
@@ -893,6 +895,41 @@ class TestPrompt(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         api_server.assert_called_once_with()
+
+    def test_plugin_load(self):
+        """load_plugins discovers bundled plugins."""
+        plugins = load_plugins()
+
+        self.assertIn("echo", plugins)
+
+    def test_plugin_execution(self):
+        """The echo plugin runs and returns its result."""
+        plugin = get_plugin("echo")
+
+        self.assertEqual(plugin.run("hello"), "Echo: hello")
+
+    def test_invalid_plugin_raises_clear_error(self):
+        """Requesting an unknown plugin raises a clear exception."""
+        with self.assertRaises(Exception) as context:
+            get_plugin("missing")
+
+        self.assertIn("Plugin not found", str(context.exception))
+
+    def test_cli_plugin_runs_plugin(self):
+        """The plugin CLI command loads and runs a plugin."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["plugin", "echo", "hello"])
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("Echo: hello", output.getvalue())
+
+    def test_cli_plugin_handles_invalid_plugin(self):
+        """The plugin CLI command reports unknown plugins cleanly."""
+        with mock.patch("sys.stdout", new_callable=StringIO) as output:
+            exit_code = cli_main(["plugin", "missing", "hello"])
+
+        self.assertEqual(exit_code, 1)
+        self.assertIn("Error: Plugin not found", output.getvalue())
 
     def test_cli_score_adds_prompt_history(self):
         """The score CLI command stores scored prompts in history."""

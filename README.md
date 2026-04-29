@@ -48,6 +48,7 @@ print(prompt.fill(role="teacher", language="English"))
 - Reuse recent prompts from local history
 - Work through prompt actions in interactive mode
 - Launch a local web dashboard for scoring and comparison
+- Extend behavior with simple local plugins
 - Track prompt template versions with notes
 - No external dependencies
 
@@ -145,6 +146,12 @@ Start API mode:
 
 ```bash
 arhupy api
+```
+
+Run a plugin:
+
+```bash
+arhupy plugin echo "hello"
 ```
 
 ## Examples
@@ -350,6 +357,29 @@ Endpoints accept JSON over `POST` and return JSON:
 POST /score   { "prompt": "You are a coach" }
 POST /diff    { "p1": "Prompt one", "p2": "Prompt two" }
 POST /improve { "prompt": "You are a coach", "api_key": "YOUR_KEY" }
+```
+
+## Plugin System
+
+`arhupy` includes a small plugin system for extending the CLI with simple Python classes.
+
+Run the bundled echo plugin:
+
+```bash
+arhupy plugin echo "hello"
+```
+
+Create a plugin by subclassing `ArhupyPlugin` and giving it a unique `name`:
+
+```python
+from arhupy.plugins import ArhupyPlugin
+
+
+class EchoPlugin(ArhupyPlugin):
+    name = "echo"
+
+    def run(self, text):
+        return f"Echo: {text}"
 ```
 
 ## Prompt History

@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.0] - Plugin System
+
+### Added
+
+- Plugin support for extending arhupy
+
 ## [1.9.0] - API Mode
 
 ### Added

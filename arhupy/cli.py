@@ -2,6 +2,7 @@
 
 import argparse
 
+from .api import run_api_server
 from .chain import build_chain
 from .diff import compare_prompts
 from .history import (
@@ -73,6 +74,7 @@ def main(argv=None):
     subparsers.add_parser("list", help="List saved prompts")
     subparsers.add_parser("templates", help="List built-in templates")
     subparsers.add_parser("interactive", help="Start interactive mode")
+    subparsers.add_parser("api", help="Start the local API server")
     subparsers.add_parser("web", help="Start the local web dashboard")
 
     args = parser.parse_args(argv)
@@ -188,6 +190,9 @@ def main(argv=None):
         return 0
     if args.command == "interactive":
         run_interactive()
+        return 0
+    if args.command == "api":
+        run_api_server()
         return 0
     if args.command == "web":
         run_server()

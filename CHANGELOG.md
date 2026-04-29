@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.0] - API Mode
+
+### Added
+
+- Local HTTP API for scoring, diff, improve
+
 ## [1.8.0] - Session Export
 
 ### Added

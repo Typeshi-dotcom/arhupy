@@ -38,6 +38,7 @@ from arhupy import (
     save_version,
     score_prompt,
 )
+from arhupy.api import handle_api_request
 from arhupy.cli import main as cli_main
 from arhupy.web import render_comparison, render_page, render_save_result, render_score
 
@@ -86,6 +87,46 @@ class TestPrompt(unittest.TestCase):
         """estimate_tokens returns len(text) / 4 rounded up."""
         self.assertEqual(estimate_tokens("hello"), 2)
         self.assertEqual(estimate_tokens("12345678"), 2)
+
+    def test_api_score_returns_json_ready_response(self):
+        """The API score handler returns score data as JSON-ready output."""
+        status, response = handle_api_request("/score", {"prompt": "You are a coach"})
+        encoded = json.dumps(response)
+
+        self.assertEqual(status, 200)
+        self.assertIn("overall_score", response)
+        self.assertIsInstance(encoded, str)
+
+    def test_api_diff_returns_json_ready_response(self):
+        """The API diff handler returns comparison data as JSON-ready output."""
+        status, response = handle_api_request("/diff", {"p1": "a b", "p2": "a c"})
+        encoded = json.dumps(response)
+
+        self.assertEqual(status, 200)
+        self.assertEqual(response["common_words"], ["a"])
+        self.assertIsInstance(encoded, str)
+
+    def test_api_improve_returns_json_response(self):
+        """The API improve handler returns improved prompt JSON."""
+        with mock.patch("arhupy.api.improve_prompt", return_value="Improved prompt"):
+            status, response = handle_api_request(
+                "/improve",
+                {"prompt": "You are a coach", "api_key": "test-key"},
+            )
+        encoded = json.dumps(response)
+
+        self.assertEqual(status, 200)
+        self.assertEqual(response["improved_prompt"], "Improved prompt")
+        self.assertIsInstance(encoded, str)
+
+    def test_api_bad_request_returns_json_error(self):
+        """The API handler returns clean JSON errors for bad requests."""
+        status, response = handle_api_request("/score", {})
+        encoded = json.dumps(response)
+
+        self.assertEqual(status, 400)
+        self.assertIn("error", response)
+        self.assertIsInstance(encoded, str)
 
     def test_save_and_load_from_library_works(self):
         """save and load persist Prompt templates in the working directory."""
@@ -844,6 +885,14 @@ class TestPrompt(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         interactive.assert_called_once_with()
+
+    def test_cli_api_calls_run_api_server(self):
+        """The api CLI command starts the local API server."""
+        with mock.patch("arhupy.cli.run_api_server") as api_server:
+            exit_code = cli_main(["api"])
+
+        self.assertEqual(exit_code, 0)
+        api_server.assert_called_once_with()
 
     def test_cli_score_adds_prompt_history(self):
         """The score CLI command stores scored prompts in history."""

@@ -141,6 +141,12 @@ arhupy export-history history.json
 arhupy import-history history.json
 ```
 
+Start API mode:
+
+```bash
+arhupy api
+```
+
 ## Examples
 
 ### Prompt
@@ -328,6 +334,22 @@ from arhupy import export_history, import_history
 export_history("history.json")
 result = import_history("history.json")
 print(result)
+```
+
+## API Mode
+
+Run a local HTTP API on `localhost:8001`:
+
+```bash
+arhupy api
+```
+
+Endpoints accept JSON over `POST` and return JSON:
+
+```text
+POST /score   { "prompt": "You are a coach" }
+POST /diff    { "p1": "Prompt one", "p2": "Prompt two" }
+POST /improve { "prompt": "You are a coach", "api_key": "YOUR_KEY" }
 ```
 
 ## Prompt History
